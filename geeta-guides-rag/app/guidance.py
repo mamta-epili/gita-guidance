@@ -39,9 +39,77 @@ INDEX_PATH = os.path.join(GUIDES_DIR, "data", "embeddings.npz")
 # noise.
 _LEADING_REF = re.compile(r"^\s*\|*\s*\d+[.\-:]\d+\s*\|*\s*")
 
+# How far back build_pairs may look for the Arjuna verse a Krishna verse
+# answers.  0 turns the pairing off entirely — the behaviour before this was
+# added.  Override without editing code:  GITA_PAIR_WITHIN=0 make demo
+#
+# WHY 1
+# -----
+# Measured over the 573 Krishna verses (make pairs):
+#
+#   gap 1 :  18  (3.1%)   <- previous verse is Arjuna. A real reply.
+#   gap 2 :  18  (3.1%)   <- previous verse is KRISHNA, in all 18 cases.
+#   gap>5 : 487  (85.0%)
+#
+# Every gap-2 case is 6.34 -> [6.35 krishna] -> 6.36: the answer began at 6.35,
+# so captioning 6.36 as the reply to 6.34 points at the wrong verse. The
+# pairing is a factual claim about the text and is made only where the text
+# supports it — 18:58 sits 57 verses into an unbroken monologue and gets none.
+#
+# Raising this is close to a no-op, and deliberately so: build_pairs stops at
+# the first Krishna verse it walks back over, so a larger value can only step
+# across a Sanjaya framing verse, never across Krishna's own words. On the
+# current corpus within=2 yields exactly the same 18 pairs as within=1. The
+# threshold is the dial; that stop condition is the actual safeguard.
+PAIR_WITHIN = int(os.environ.get("GITA_PAIR_WITHIN", "1"))
+
 
 class NotReady(RuntimeError):
     """Raised when the corpus or the embedding index hasn't been built yet."""
+
+
+def verse_order(vid: str) -> tuple[int, int]:
+    """Recitation order. '10:2' sorts before '10:10', which string order won't."""
+    ch, n = vid.split(":")
+    return int(ch), int(n)
+
+
+def build_pairs(verses: dict[str, dict], within: int) -> dict[str, str]:
+    """Map each Krishna verse to the Arjuna verse it answers, if adjacent.
+
+    Derived from the speaker labels — see retrieval/speakers.py, which
+    forward-fills them from the उवाच markers.
+
+    Ordering is (chapter, verse) across the whole book rather than per chapter,
+    so an exchange spanning a chapter break would still be found. None
+    currently do, but the corpus is regenerated from an upstream dataset.
+
+    Module-level rather than a method because scripts/pair_report.py checks the
+    same claims without loading the embedding index — two copies of this rule
+    would eventually disagree about what the page is asserting.
+    """
+    if within < 1:
+        return {}
+
+    seq = sorted(verses, key=verse_order)
+    speaker = [verses[v].get("speaker", "krishna") for v in seq]
+
+    pairs: dict[str, str] = {}
+    for i, vid in enumerate(seq):
+        if speaker[i] != "krishna":
+            continue
+        for back in range(1, within + 1):
+            j = i - back
+            if j < 0:
+                break
+            if speaker[j] == "arjuna":
+                pairs[vid] = seq[j]
+                break
+            # Hitting Krishna first means the reply already began earlier, so
+            # this verse continues an answer rather than opening one.
+            if speaker[j] == "krishna":
+                break
+    return pairs
 
 
 def _clean(text: str) -> str:
@@ -61,7 +129,7 @@ def _pick(renderings: list[dict], prefer: str | None) -> dict | None:
 class Guidance:
     """Loads the corpus + dense index once, answers questions from them."""
 
-    def __init__(self, public_only: bool = False):
+    def __init__(self, public_only: bool = False, pair_within: int | None = None):
         if not os.path.exists(VERSES_PATH):
             raise NotReady(
                 f"No corpus at {VERSES_PATH}\n"
@@ -86,6 +154,9 @@ class Guidance:
 
         self.retriever = DenseRetriever(INDEX_PATH)
         self.public_only = public_only
+        self.pair_within = PAIR_WITHIN if pair_within is None else pair_within
+        # Computed once at load: 700 verses, but it runs on every question.
+        self._answers = build_pairs(self.verses, self.pair_within)
 
     # -- shaping ---------------------------------------------------------
     def render(self, vid: str, score: float | None = None,
@@ -215,7 +286,29 @@ class Guidance:
         rendered = [self.render(r["id"], r["score"], r["matched_lang"]) for r in rows]
 
         teaching = [v for v in rendered if v["speaker"] == "krishna"][:k]
-        dialogue = [v for v in rendered if v["speaker"] != "krishna"][:context_k]
+        others = [v for v in rendered if v["speaker"] != "krishna"]
+
+        # Attach the question each teaching verse answers, where the text
+        # actually says so. The retriever ranks verses one at a time and has no
+        # idea any of them is a reply; this restores that from the speaker
+        # labels, so the curated and retrieved routes render the same shape
+        # whenever the pairing is true. Most verses get none — 18:58 is 57
+        # verses into a monologue, and inventing a question for it would be a
+        # confident-looking lie.
+        paired: set[str] = set()
+        for v in teaching:
+            asked_by = self._answers.get(v["id"])
+            if asked_by:
+                # No score: the pair is a fact about the text, not a hit. A
+                # number here would suggest the retriever found it.
+                v["asks"] = self.render(asked_by)
+                paired.add(asked_by)
+
+        # A verse shown as a question above its answer must not also appear in
+        # the Arjuna block below — same verse, twice, one screen apart. Filter
+        # before the slice, or promoting one verse silently shortens the block
+        # instead of pulling the next match up into it.
+        dialogue = [v for v in others if v["id"] not in paired][:context_k]
 
         return {
             "question": question,

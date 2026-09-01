@@ -20,7 +20,7 @@ PORT ?= 8000
 PM   ?= pnpm
 
 .PHONY: help setup install backend frontend build serve check clean venv-ok fe-ok \
-        demo safety
+        demo safety pairs try
 
 help:
 	@sed -n 's/^#   \{0,1\}//p;s/^# \{0,1\}//p' $(MAKEFILE_LIST) | sed -n '3,20p'
@@ -69,3 +69,17 @@ clean:
 # acute distress, and — just as important — questions that must NOT trigger.
 safety: venv-ok
 	$(PY) -m app.safety --test
+
+# Every "Arjuna asks / Krishna answers" caption the app would print, listed so
+# it can be checked against the text. Needs no embedding index.
+#   make pairs              the shipped threshold
+#   make pairs W=2          what a wider one would claim
+#   GITA_PAIR_WITHIN=0 ...  turn the pairing off entirely
+pairs: venv-ok
+	$(PY) scripts/pair_report.py $(if $(W),--within $(W),)
+
+# Try a question against the real retriever without rebuilding the demo page.
+#   make try Q="Why do I keep doing the thing I know is wrong?"
+try: venv-ok
+	@test -n "$(Q)" || { echo 'usage: make try Q="your question"'; exit 2; }
+	$(PY) scripts/try_question.py --public-only "$(Q)"

@@ -41,16 +41,50 @@ OUT = os.path.join(REPO_ROOT, "docs", "demo.html")
 sys.path.insert(0, APP_ROOT)
 
 # The questions the demo offers. Chosen to show the range rather than to
-# flatter: two guidance questions (vague, the real use case), two lookups
-# (precise), and one where the honest answer is that the text predates the
-# question.
+# flatter: vague guidance questions (the real use case), precise lookups, and
+# the one question that bypasses retrieval entirely.
+#
+# ORDER MATTERS: the page opens on QUESTIONS[0], so the first entry is the
+# landing state. The despair question is second — one click away, not the first
+# thing a stranger sees on a page linked from a CV. Swap the two lines to lead
+# with it.
 QUESTIONS = [
     {"q": "I am stressed. Guide me.", "sa": "चिन्ता", "en": "stressed"},
+    # Routed to the curated set rather than the retriever — the one place the
+    # app overrides cosine similarity, and so the most worth demonstrating.
+    # Labelled विषाद, which is the name of Chapter 1 itself: अर्जुनविषादयोग,
+    # the Yoga of Arjuna's Despondency. The chapter is this question. The chip
+    # stays gentle; the full phrasing appears only once it is clicked.
+    {"q": "I don't want to live anymore", "sa": "विषाद", "en": "when nothing seems worth it"},
     {"q": "I am afraid of what is coming.", "sa": "भय", "en": "afraid"},
     {"q": "I am angry and I cannot let it go.", "sa": "क्रोध", "en": "angry"},
     {"q": "Someone I love has died. How do I bear it?", "sa": "शोक", "en": "grieving"},
     {"q": "I am in a situation where I know something wrong is happening "
           "but I cannot say it. What should I do?", "sa": "", "en": "a wrong I can't name"},
+    # Aimed at the 2.54 -> 2.55 exchange, so the page carries a second
+    # retrieved pairing rather than a third route to 3:37 (which "afraid" and
+    # "desire to ruin" already reach). Arjuna: "how can we recognise the saint
+    # whose mind is steady? how does he talk, how does he live?" — स्थितप्रज्ञ is
+    # his own word for it.
+    #
+    # THE WORDING HERE IS LOAD-BEARING. Match the ANSWER's language, not the
+    # question's. Measured with scripts/try_question.py --want 2:55:
+    #
+    #   "What does someone who is actually at peace look like?"   0 pairs
+    #       -> 2:71, 6:7, 2:64, 14:23 teaching; 2:54 into DIALOGUE at 0.553.
+    #          Reads naturally, and is a paraphrase of 2:54 — Arjuna's own
+    #          words — so it retrieves the question and loses the answer.
+    #   "How do I know when I have really let go of wanting things?"  1 pair
+    #       -> 2:54 -> 2:55 at 0.553.  <- chosen
+    #   "Is it possible to be content with nothing but yourself?"     1 pair
+    #       -> 2:54 -> 2:55 at 0.536, but tops out on 3:17 matched via `hi`,
+    #          which prints a "not published here" note on the lead card.
+    #
+    # Same failure that sank two earlier attempts (3.36->3.37, 5.1->5.2): a
+    # question phrased like Arjuna's pulls Arjuna. This one echoes 2:55's
+    # "given up the desires of his heart" instead, and pairs.
+    {"q": "How do I know when I have really let go of wanting things?",
+     "sa": "स्थितप्रज्ञ", "en": "have I really let go"},
     {"q": "How can I do my work well if I am not allowed to care about the result?",
      "sa": "कर्म", "en": "work without attachment"},
     {"q": "What is the chain that starts with wanting something and ends badly?",
@@ -85,24 +119,48 @@ def main() -> None:
             "question": item["q"],
             "chip_sa": item["sa"],
             "chip_en": item["en"],
+            "curated": res.get("curated"),
             "teaching": res["teaching"],
             "dialogue": res["dialogue"],
             "pool_size": res["pool_size"],
         })
         top = res["teaching"][0]["id"] if res["teaching"] else "—"
+        how = "curated" if res.get("curated") else "retrieved"
+        # Which verses render as an exchange. Printed because it is the one
+        # thing in the output that no setting guarantees — it depends on what
+        # the retriever ranked.
+        pairs = [f"{v['asks']['id']}→{v['id']}" for v in res["teaching"] if v.get("asks")]
         print(f"  {item['en'][:28]:28s} → {len(res['teaching'])} teaching, "
-              f"{len(res['dialogue'])} dialogue, top {top}")
+              f"{len(res['dialogue'])} dialogue, top {top}  [{how}]"
+              + (f"  [pair {', '.join(pairs)}]" if pairs else ""))
 
     # Guard: a public build must not carry restricted text. Belt and braces on
     # top of public_only — if this ever fires, the filter regressed.
+    #
+    # Checks the redistributable flag on every rendering of every verse, in
+    # every position, rather than looking for Hindi specifically. Hindi is
+    # merely what is restricted today; a future corpus could carry a
+    # copyrighted English translation as the preferred one, and a
+    # Hindi-shaped guard would wave it straight through.
+    def every_verse():
+        for a in answers:
+            for v in a["teaching"] + a["dialogue"]:
+                yield v
+                if v.get("asks"):          # paired verses render too
+                    yield v["asks"]
+
     leaked = [
-        v["id"] for a in answers for v in a["teaching"] + a["dialogue"]
-        if v.get("hindi") is not None
+        (v["id"], lang, r["translator"])
+        for v in every_verse()
+        for lang in ("english", "hindi")
+        if (r := v.get(lang)) and not r.get("redistributable", False)
     ]
     if leaked:
+        listing = "\n    ".join(f"{vid} {lang} — {who}" for vid, lang, who in leaked[:8])
         raise SystemExit(
-            f"ABORT: {len(leaked)} verses carry Hindi renderings, which are not "
-            f"redistributable: {leaked[:5]}\n  Guidance(public_only=True) did not filter."
+            f"ABORT: {len(leaked)} renderings are not redistributable but reached "
+            f"the page:\n    {listing}\n"
+            f"  Guidance(public_only=True) did not filter. Nothing was written."
         )
 
     data = {

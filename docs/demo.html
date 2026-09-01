@@ -38,6 +38,35 @@ body{
 .banner{border:1px dashed rgba(35,168,154,.4);border-radius:9px;
   padding:13px 16px;margin-bottom:30px;background:rgba(35,168,154,.05)}
 .banner b{color:var(--peacock)}
+.deva-inline{font-family:var(--deva);font-size:.9em}
+/* 0.9 of the English beside it (.rend p is 15.5px, muted 14.5px). Explicit px
+   rather than em: em would resolve against .rend, not against the 15.5px this
+   paragraph actually renders at.
+   Selectors are qualified with .rend p on purpose — a bare .hi-body is (0,1,0)
+   and loses to .rend p (0,1,1) further down the sheet, so the override would
+   silently do nothing. */
+.rend p.hi-body{font-family:var(--deva);font-size:14px;line-height:1.9}
+.card.muted .rend p.hi-body{font-size:13px}
+/* Why a verse can report a Hindi match and show no Hindi. */
+.lang-gap{margin:12px 0 0;font:11px var(--mono);color:var(--faint);
+  border-left:2px solid rgba(233,184,80,.28);padding-left:9px;line-height:1.6}
+/* Sits under the banner, before the questions: what a reader needs to know
+   about the text before reading any of it. */
+.disclaimer{margin:14px 0 0;padding:14px 18px;border-radius:8px;
+  border:1px dashed rgba(35,168,154,.42)}
+.disclaimer p{margin:0;font:13px/1.7 var(--serif);color:var(--faint)}
+.disclaimer b{color:var(--peacock);font-weight:600}
+.disclaimer b.lang{color:var(--gold);font-weight:600}
+/* Devanagari set at the same px as Latin reads noticeably larger — bigger
+   x-height, plus the shirorekha closing the top of every letter. 0.9em brings
+   हिन्दी back to the visual weight of the English beside it. Ratio, not a fixed
+   size, so it holds if the surrounding text is ever resized. */
+.disclaimer b.deva{font-family:var(--deva);font-size:.9em}
+/* Names the script for a reader who can't read it. A gloss, not a second
+   label — so it inherits the body colour instead of picking up the gold.
+   Note --dim (#baa88d) is LIGHTER than the --faint (#7e6c56) this paragraph
+   uses, so reaching for it here would brighten the gloss, not quiet it. */
+.disclaimer .gloss{color:inherit;font-size:.92em}
 .banner p{margin:0;font-size:13px;color:var(--dim);line-height:1.55}
 .banner a{color:var(--gold)}
 
@@ -132,6 +161,11 @@ h1 .om{color:var(--gold);margin-right:12px;text-shadow:0 0 26px rgba(233,184,80,
 .rend p{margin:7px 0 0;line-height:1.75;font-family:var(--serif);font-size:15.5px}
 .card.muted .rend p{font-size:14.5px;color:var(--dim)}
 
+/* An exchange, not two adjacent verses: a peacock rail ties question to answer. */
+.pair{border-left:2px solid var(--peacock-deep);padding-left:14px;margin:0 0 16px 2px}
+.pair-note{font:10px var(--mono);color:var(--peacock);margin:0 0 9px;
+  letter-spacing:.14em;text-transform:uppercase}
+
 .meta{margin-top:26px;font:11px var(--mono);color:var(--faint)}
 footer{margin-top:46px;padding-top:20px;border-top:1px solid var(--line);
   color:var(--faint);font-size:13px;text-align:center}
@@ -151,9 +185,19 @@ footer p{max-width:64ch;margin:8px auto}
     <p>
       <b>Recorded demo.</b> These are real responses from the retrieval pipeline, captured by
       running each question against all 700 verses and saving the result. This page is a single
-      static file — no backend, no API keys, no network calls. Only public-domain text is shown:
-      the Sanskrit, and Shri Purohit Swami's English translation.
+      static file — no backend, no API keys, no network calls.
+      One question (<b class="deva-inline">विषाद</b>) is answered from a hand-chosen set rather
+      than by similarity, and says so where the scores would be.
       <a href="https://github.com/mamta-epili/gita-guidance">Source on GitHub &rarr;</a>
+    </p>
+  </div>
+
+  <div class="disclaimer">
+    <p>
+      <b>Languages.</b> Every verse carries its meaning in <b class="lang">English</b> and
+      <b class="lang deva">हिन्दी</b> <span class="gloss">(Hindi)</span>, and both are searched. This published page shows the Sanskrit
+      and the English only — the Hindi translations are under copyright. The full version,
+      run locally, displays both.
     </p>
   </div>
 
@@ -200,7 +244,7 @@ footer p{max-width:64ch;margin:8px auto}
 
 <script>
 const DATA = {
- "generated": "2026-09-01",
+ "generated": "2026-09-02",
  "model": "BAAI/bge-m3",
  "verses_indexed": 700,
  "answers": [
@@ -208,6 +252,7 @@ const DATA = {
    "question": "I am stressed. Guide me.",
    "chip_sa": "चिन्ता",
    "chip_en": "stressed",
+   "curated": null,
    "teaching": [
     {
      "id": "18:58",
@@ -329,9 +374,161 @@ const DATA = {
    "pool_size": 16
   },
   {
+   "question": "I don't want to live anymore",
+   "chip_sa": "विषाद",
+   "chip_en": "when nothing seems worth it",
+   "curated": {
+    "reason": "despair",
+    "lead_heading_sa": "श्रीभगवानुवाच",
+    "lead_heading_en": "The Blessed Lord said",
+    "follow_heading_sa": "अर्जुन उवाच",
+    "follow_heading_en": "You are not the first",
+    "follow_note": "The Gita opens with a man in this exact place. These are his words, not advice — and the whole book exists because he said them."
+   },
+   "teaching": [
+    {
+     "id": "6:35",
+     "chapter": 6,
+     "verse": 35,
+     "citation": "Bhagavad Gita 6.35",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "श्रीभगवानुवाच |\nअसंशयं महाबाहो मनो दुर्निग्रहं चलम् |\nअभ्यासेन तु कौन्तेय वैराग्येण च गृह्यते ||६-३५||",
+     "iast": "śrībhagavānuvāca .\nasaṃśayaṃ mahābāho mano durnigrahaṃ calam .\nabhyāsena tu kaunteya vairāgyeṇa ca gṛhyate ||6-35||",
+     "english": {
+      "text": "Lord Shri Krishna replied: Doubtless, O Mighty One, the mind is fickle and exceedingly difficult to restrain, but, O Son of Kunti, with practice and renunciation it can be done.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": null,
+     "matched_lang": null,
+     "asks": {
+      "id": "6:34",
+      "chapter": 6,
+      "verse": 34,
+      "citation": "Bhagavad Gita 6.34",
+      "speaker": "arjuna",
+      "speaker_name": "Arjuna",
+      "sanskrit": "चञ्चलं हि मनः कृष्ण प्रमाथि बलवद् दृढम् |\nतस्याहं निग्रहं मन्ये वायोरिव सुदुष्करम् ||६-३४||",
+      "iast": "cañcalaṃ hi manaḥ kṛṣṇa pramāthi balavad dṛḍham .\ntasyāhaṃ nigrahaṃ manye vāyoriva suduṣkaram ||6-34||",
+      "english": {
+       "text": "My Lord! Verily, the mind is fickle and turbulent, obstinate and strong, yea extremely difficult as the wind to control.",
+       "translator": "Shri Purohit Swami",
+       "licence": "public-domain",
+       "redistributable": true
+      },
+      "hindi": null,
+      "score": null,
+      "matched_lang": null
+     }
+    },
+    {
+     "id": "6:40",
+     "chapter": 6,
+     "verse": 40,
+     "citation": "Bhagavad Gita 6.40",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "श्रीभगवानुवाच |\nपार्थ नैवेह नामुत्र विनाशस्तस्य विद्यते |\nन हि कल्याणकृत्कश्चिद् दुर्गतिं तात गच्छति ||६-४०||",
+     "iast": "śrībhagavānuvāca .\npārtha naiveha nāmutra vināśastasya vidyate .\nna hi kalyāṇakṛtkaścid durgatiṃ tāta gacchati ||6-40||",
+     "english": {
+      "text": "Lord Shri Krishna replied: My beloved child! There is no destruction for him, either in this world or in the next. No evil fate awaits him who treads the path of righteousness.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": null,
+     "matched_lang": null
+    },
+    {
+     "id": "18:66",
+     "chapter": 18,
+     "verse": 66,
+     "citation": "Bhagavad Gita 18.66",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "सर्वधर्मान्परित्यज्य मामेकं शरणं व्रज |\nअहं त्वा सर्वपापेभ्यो मोक्षयिष्यामि मा शुचः ||१८-६६||",
+     "iast": "sarvadharmānparityajya māmekaṃ śaraṇaṃ vraja .\nahaṃ tvāṃ sarvapāpebhyo mokṣyayiṣyāmi mā śucaḥ ||18-66||",
+     "english": {
+      "text": "Give up then thy earthly duties, surrender thyself to Me only. Do not be anxious; I will absolve thee from all thy sin.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": null,
+     "matched_lang": null
+    }
+   ],
+   "dialogue": [
+    {
+     "id": "1:29",
+     "chapter": 1,
+     "verse": 29,
+     "citation": "Bhagavad Gita 1.29",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "सीदन्ति मम गात्राणि मुखं च परिशुष्यति |\nवेपथुश्च शरीरे मे रोमहर्षश्च जायते ||१-२९||",
+     "iast": "sīdanti mama gātrāṇi mukhaṃ ca pariśuṣyati .\nvepathuśca śarīre me romaharṣaśca jāyate ||1-29||",
+     "english": {
+      "text": "My limbs fail me and my throat is parched, my body trembles and my hair stands on end.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": null,
+     "matched_lang": null
+    },
+    {
+     "id": "1:46",
+     "chapter": 1,
+     "verse": 46,
+     "citation": "Bhagavad Gita 1.46",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "यदि मामप्रतीकारमशस्त्रं शस्त्रपाणयः |\nधार्तराष्ट्रा रणे हन्युस्तन्मे क्षेमतरं भवेत् ||१-४६||",
+     "iast": "yadi māmapratīkāramaśastraṃ śastrapāṇayaḥ .\ndhārtarāṣṭrā raṇe hanyustanme kṣemataraṃ bhavet ||1-46||",
+     "english": {
+      "text": "If, on the contrary, the sons of Dhritarashtra, with weapons in their hand, should slay me, unarmed and unresisting, surely that would be better for my welfare!\"",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": null,
+     "matched_lang": null
+    },
+    {
+     "id": "2:7",
+     "chapter": 2,
+     "verse": 7,
+     "citation": "Bhagavad Gita 2.7",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "कार्पण्यदोषोपहतस्वभावः\nपृच्छामि त्वां धर्मसम्मूढचेताः |\nयच्छ्रेयः स्यान्निश्चितं ब्रूहि तन्मे\nशिष्यस्तेऽहं शाधि मां त्वां प्रपन्नम् ||२-७||",
+     "iast": "kārpaṇyadoṣopahatasvabhāvaḥ pṛcchāmi tvāṃ dharmasammūḍhacetāḥ .\nyacchreyaḥ syānniścitaṃ brūhi tanme śiṣyaste.ahaṃ śādhi māṃ tvāṃ prapannam ||2-7||",
+     "english": {
+      "text": "My heart is oppressed with pity; and my mind confused as to what my duty is. Therefore, my Lord, tell me what is best for my spiritual welfare, for I am Thy disciple. Please direct me, I pray.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": null,
+     "matched_lang": null
+    }
+   ],
+   "pool_size": 6
+  },
+  {
    "question": "I am afraid of what is coming.",
    "chip_sa": "भय",
    "chip_en": "afraid",
+   "curated": null,
    "teaching": [
     {
      "id": "16:21",
@@ -407,7 +604,26 @@ const DATA = {
      },
      "hindi": null,
      "score": 0.5551,
-     "matched_lang": "en"
+     "matched_lang": "en",
+     "asks": {
+      "id": "3:36",
+      "chapter": 3,
+      "verse": 36,
+      "citation": "Bhagavad Gita 3.36",
+      "speaker": "arjuna",
+      "speaker_name": "Arjuna",
+      "sanskrit": "अर्जुन उवाच |\nअथ केन प्रयुक्तोऽयं पापं चरति पूरुषः |\nअनिच्छन्नपि वार्ष्णेय बलादिव नियोजितः ||३-३६||",
+      "iast": "arjuna uvāca .\natha kena prayukto.ayaṃ pāpaṃ carati pūruṣaḥ .\nanicchannapi vārṣṇeya balādiva niyojitaḥ ||3-36||",
+      "english": {
+       "text": "Arjuna asked: My Lord! Tell me, what is it that drives a man to sin, even against his will and as if by compulsion?",
+       "translator": "Shri Purohit Swami",
+       "licence": "public-domain",
+       "redistributable": true
+      },
+      "hindi": null,
+      "score": null,
+      "matched_lang": null
+     }
     }
    ],
    "dialogue": [
@@ -456,6 +672,7 @@ const DATA = {
    "question": "I am angry and I cannot let it go.",
    "chip_sa": "क्रोध",
    "chip_en": "angry",
+   "curated": null,
    "teaching": [
     {
      "id": "16:18",
@@ -580,6 +797,7 @@ const DATA = {
    "question": "Someone I love has died. How do I bear it?",
    "chip_sa": "शोक",
    "chip_en": "grieving",
+   "curated": null,
    "teaching": [
     {
      "id": "8:5",
@@ -704,6 +922,7 @@ const DATA = {
    "question": "I am in a situation where I know something wrong is happening but I cannot say it. What should I do?",
    "chip_sa": "",
    "chip_en": "a wrong I can't name",
+   "curated": null,
    "teaching": [
     {
      "id": "18:31",
@@ -825,9 +1044,115 @@ const DATA = {
    "pool_size": 16
   },
   {
+   "question": "How do I know when I have really let go of wanting things?",
+   "chip_sa": "स्थितप्रज्ञ",
+   "chip_en": "have I really let go",
+   "curated": null,
+   "teaching": [
+    {
+     "id": "2:50",
+     "chapter": 2,
+     "verse": 50,
+     "citation": "Bhagavad Gita 2.50",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "बुद्धियुक्तो जहातीह उभे सुकृतदुष्कृते |\nतस्माद्योगाय युज्यस्व योगः कर्मसु कौशलम् ||२-५०||",
+     "iast": "buddhiyukto jahātīha ubhe sukṛtaduṣkṛte .\ntasmādyogāya yujyasva yogaḥ karmasu kauśalam ||2-50||",
+     "english": {
+      "text": "When a man attains to Pure Reason, he renounces in this world the results of good and evil alike. Cling thou to Right Action. Spirituality is the real art of living.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5622,
+     "matched_lang": "en"
+    },
+    {
+     "id": "2:55",
+     "chapter": 2,
+     "verse": 55,
+     "citation": "Bhagavad Gita 2.55",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "श्रीभगवानुवाच |\nप्रजहाति यदा कामान्सर्वान्पार्थ मनोगतान् |\nआत्मन्येवात्मना तुष्टः स्थितप्रज्ञस्तदोच्यते ||२-५५||",
+     "iast": "śrībhagavānuvāca .\nprajahāti yadā kāmānsarvānpārtha manogatān .\nātmanyevātmanā tuṣṭaḥ sthitaprajñastadocyate ||2-55||",
+     "english": {
+      "text": "Lord Shri Krishna replied: When a man has given up the desires of his heart and is satisfied with the Self alone, be sure that he has reached the highest state.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5535,
+     "matched_lang": "en",
+     "asks": {
+      "id": "2:54",
+      "chapter": 2,
+      "verse": 54,
+      "citation": "Bhagavad Gita 2.54",
+      "speaker": "arjuna",
+      "speaker_name": "Arjuna",
+      "sanskrit": "अर्जुन उवाच |\nस्थितप्रज्ञस्य का भाषा समाधिस्थस्य केशव |\nस्थितधीः किं प्रभाषेत किमासीत व्रजेत किम् ||२-५४||",
+      "iast": "arjuna uvāca .\nsthitaprajñasya kā bhāṣā samādhisthasya keśava .\nsthitadhīḥ kiṃ prabhāṣeta kimāsīta vrajeta kim ||2-54||",
+      "english": {
+       "text": "Arjuna asked: My Lord! How can we recognise the saint who has attained Pure Intellect, who has reached this state of Bliss, and whose mind is steady? how does he talk, how does he live, and how does he act?",
+       "translator": "Shri Purohit Swami",
+       "licence": "public-domain",
+       "redistributable": true
+      },
+      "hindi": null,
+      "score": null,
+      "matched_lang": null
+     }
+    },
+    {
+     "id": "18:49",
+     "chapter": 18,
+     "verse": 49,
+     "citation": "Bhagavad Gita 18.49",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "असक्तबुद्धिः सर्वत्र जितात्मा विगतस्पृहः |\nनैष्कर्म्यसिद्धिं परमां संन्यासेनाधिगच्छति ||१८-४९||",
+     "iast": "asaktabuddhiḥ sarvatra jitātmā vigataspṛhaḥ .\nnaiṣkarmyasiddhiṃ paramāṃ saṃnyāsenādhigacchati ||18-49||",
+     "english": {
+      "text": "He whose mind is entirely detached, who has conquered himself, whose desires have vanished, by his renunciation reaches that stage of perfect freedom where action completes itself and leaves no seed.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5465,
+     "matched_lang": "en"
+    },
+    {
+     "id": "3:30",
+     "chapter": 3,
+     "verse": 30,
+     "citation": "Bhagavad Gita 3.30",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "मयि सर्वाणि कर्माणि संन्यस्याध्यात्मचेतसा |\nनिराशीर्निर्ममो भूत्वा युध्यस्व विगतज्वरः ||३-३०||",
+     "iast": "mayi sarvāṇi karmāṇi saṃnyasyādhyātmacetasā .\nnirāśīrnirmamo bhūtvā yudhyasva vigatajvaraḥ ||3-30||",
+     "english": {
+      "text": "Therefore, surrendering thy actions unto Me, thy thoughts concentrated on the Absolute, free from selfishness and without anticipation of reward, with mind devoid of excitement, begin thou to fight.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5278,
+     "matched_lang": "en"
+    }
+   ],
+   "dialogue": [],
+   "pool_size": 16
+  },
+  {
    "question": "How can I do my work well if I am not allowed to care about the result?",
    "chip_sa": "कर्म",
    "chip_en": "work without attachment",
+   "curated": null,
    "teaching": [
     {
      "id": "3:19",
@@ -913,6 +1238,7 @@ const DATA = {
    "question": "What is the chain that starts with wanting something and ends badly?",
    "chip_sa": "मोह",
    "chip_en": "desire to ruin",
+   "curated": null,
    "teaching": [
     {
      "id": "16:11",
@@ -950,7 +1276,26 @@ const DATA = {
      },
      "hindi": null,
      "score": 0.5411,
-     "matched_lang": "en"
+     "matched_lang": "en",
+     "asks": {
+      "id": "3:36",
+      "chapter": 3,
+      "verse": 36,
+      "citation": "Bhagavad Gita 3.36",
+      "speaker": "arjuna",
+      "speaker_name": "Arjuna",
+      "sanskrit": "अर्जुन उवाच |\nअथ केन प्रयुक्तोऽयं पापं चरति पूरुषः |\nअनिच्छन्नपि वार्ष्णेय बलादिव नियोजितः ||३-३६||",
+      "iast": "arjuna uvāca .\natha kena prayukto.ayaṃ pāpaṃ carati pūruṣaḥ .\nanicchannapi vārṣṇeya balādiva niyojitaḥ ||3-36||",
+      "english": {
+       "text": "Arjuna asked: My Lord! Tell me, what is it that drives a man to sin, even against his will and as if by compulsion?",
+       "translator": "Shri Purohit Swami",
+       "licence": "public-domain",
+       "redistributable": true
+      },
+      "hindi": null,
+      "score": null,
+      "matched_lang": null
+     }
     },
     {
      "id": "18:22",
@@ -991,33 +1336,14 @@ const DATA = {
      "matched_lang": "en"
     }
    ],
-   "dialogue": [
-    {
-     "id": "3:36",
-     "chapter": 3,
-     "verse": 36,
-     "citation": "Bhagavad Gita 3.36",
-     "speaker": "arjuna",
-     "speaker_name": "Arjuna",
-     "sanskrit": "अर्जुन उवाच |\nअथ केन प्रयुक्तोऽयं पापं चरति पूरुषः |\nअनिच्छन्नपि वार्ष्णेय बलादिव नियोजितः ||३-३६||",
-     "iast": "arjuna uvāca .\natha kena prayukto.ayaṃ pāpaṃ carati pūruṣaḥ .\nanicchannapi vārṣṇeya balādiva niyojitaḥ ||3-36||",
-     "english": {
-      "text": "Arjuna asked: My Lord! Tell me, what is it that drives a man to sin, even against his will and as if by compulsion?",
-      "translator": "Shri Purohit Swami",
-      "licence": "public-domain",
-      "redistributable": true
-     },
-     "hindi": null,
-     "score": 0.4877,
-     "matched_lang": "hi"
-    }
-   ],
+   "dialogue": [],
    "pool_size": 16
   },
   {
    "question": "Is it better to be mediocre at what suits me than excellent at someone else's role?",
    "chip_sa": "स्वधर्म",
    "chip_en": "my own duty",
+   "curated": null,
    "teaching": [
     {
      "id": "3:35",
@@ -1146,15 +1472,38 @@ function card(v, muted) {
     ? '<div class="rend"><span class="whom">English &middot; ' + esc(v.english.translator) +
       "</span><p>" + esc(v.english.text) + "</p></div>"
     : "";
+  // Rendered when present, which on the published build is never: every Hindi
+  // translation in the corpus is under copyright, so public_only drops them.
+  // Kept so a local build (GITA_PUBLIC_ONLY=0) matches the Angular app, and so
+  // a freely-licensed Hindi would need no template change.
+  const hi = v.hindi
+    ? '<div class="rend"><span class="whom">हिन्दी &middot; ' + esc(v.hindi.translator) +
+      '</span><p class="hi-body">' + esc(v.hindi.text) + "</p></div>"
+    : "";
+  // Curated verses carry no score — nothing was ranked — so the whole element
+  // is dropped rather than rendered empty.
+  const score = v.score != null
+    ? '<span class="score">' + v.score.toFixed(3) +
+      (v.matched_lang ? "<em>" + esc(v.matched_lang) + "</em>" : "") + "</span>"
+    : "";
   return '<article class="card' + (muted ? " muted" : "") + '">' +
     '<div class="chead"><span class="cite">' + esc(v.citation) +
-      ' <em class="who">' + esc(v.speaker_name) + "</em></span>" +
-      '<span class="score">' + (v.score != null ? v.score.toFixed(3) : "") +
-      (v.matched_lang ? "<em>" + esc(v.matched_lang) + "</em>" : "") + "</span></div>" +
+      ' <em class="who">' + esc(v.speaker_name) + "</em></span>" + score + "</div>" +
     (v.sanskrit ? '<p class="deva">' + esc(v.sanskrit) + "</p>" : "") +
     (v.iast ? '<p class="iast">' + esc(v.iast) + "</p>" : "") +
-    (en ? '<hr class="rule">' + en : "") +
+    (en || hi ? '<hr class="rule">' + en + hi : "") +
+    (v.matched_lang === "hi" && !v.hindi
+      ? '<p class="lang-gap">Matched on the Hindi, which is not published here.</p>'
+      : "") +
     "</article>";
+}
+
+/** A lead verse may carry `asks`, the verse it replies to. */
+function leadCard(v) {
+  if (!v.asks) return card(v, false);
+  return '<div class="pair"><p class="pair-note">Arjuna asks</p>' +
+    card(v.asks, true) +
+    '<p class="pair-note">Krishna answers</p>' + card(v, false) + "</div>";
 }
 
 let openDialogue = true;
@@ -1166,34 +1515,48 @@ function render(i) {
   const btns = document.querySelectorAll(".q");
   for (let k = 0; k < btns.length; k++) btns[k].classList.toggle("on", k === i);
 
+  // A curated answer brings its own headings — "You are not the first" reads
+  // very differently from "the same difficulty, as Arjuna put it".
+  const c = r.curated;
+  const leadSa = c ? c.lead_heading_sa : "श्रीभगवानुवाच";
+  const leadEn = c ? c.lead_heading_en : "The Blessed Lord said";
+  const followSa = c ? c.follow_heading_sa : "अर्जुन उवाच";
+  const followEn = c ? c.follow_heading_en : "the same difficulty, as Arjuna put it";
+  const followNote = c
+    ? c.follow_note
+    : "These matched the words most closely — because Arjuna is describing the same " +
+      "trouble. They are the question, not the teaching.";
+
   const teaching = r.teaching.length
     ? '<section class="teaching"><div class="thead"><div class="titles">' +
-      '<span class="sa">श्रीभगवानुवाच</span>' +
-      '<span class="say">The Blessed Lord said</span></div>' +
+      '<span class="sa">' + esc(leadSa) + "</span>" +
+      '<span class="say">' + esc(leadEn) + "</span></div>" +
       '<span class="badge">the answer</span></div>' +
-      r.teaching.map(function (v) { return card(v, false); }).join("") +
+      r.teaching.map(leadCard).join("") +
       "</section>"
     : "";
 
   const dialogue = r.dialogue.length
     ? '<section class="dialogue"><button class="dhead" id="dtoggle" aria-expanded="' +
       openDialogue + '"><span class="caret">' + (openDialogue ? "−" : "+") +
-      '</span><span class="sa">अर्जुन उवाच</span><span class="sep">&middot;</span>' +
-      '<span class="say">the same difficulty, as Arjuna put it (' + r.dialogue.length +
+      '</span><span class="sa">' + esc(followSa) + '</span><span class="sep">&middot;</span>' +
+      '<span class="say">' + esc(followEn) + " (" + r.dialogue.length +
       ")</span></button>" +
       (openDialogue
-        ? '<p class="note" style="margin:18px 0">These matched the words most closely — ' +
-          "because Arjuna is describing the same trouble. They are the question, not the " +
-          "teaching.</p>" + r.dialogue.map(function (v) { return card(v, true); }).join("")
+        ? '<p class="note" style="margin:18px 0">' + esc(followNote) + "</p>" +
+          r.dialogue.map(function (v) { return card(v, true); }).join("")
         : "") +
       "</section>"
     : "";
 
+  const count = r.teaching.length + r.dialogue.length;
+  const how = c
+    ? count + " verses &middot; chosen, not ranked"
+    : count + " of " + r.pool_size + " retrieved &middot; " + esc(DATA.model);
+
   document.getElementById("out").innerHTML =
     '<p class="asked">' + esc(r.question) + "</p>" + teaching + dialogue +
-    '<p class="meta">' + (r.teaching.length + r.dialogue.length) + " of " + r.pool_size +
-    " retrieved &middot; " + esc(DATA.model) + " &middot; recorded " + esc(DATA.generated) +
-    "</p>";
+    '<p class="meta">' + how + " &middot; recorded " + esc(DATA.generated) + "</p>";
 
   const t = document.getElementById("dtoggle");
   if (t) t.addEventListener("click", function () { openDialogue = !openDialogue; render(current); });

@@ -184,7 +184,12 @@ import { OrnLotus } from '../ornaments/ornaments';
         font-family: var(--serif);
         font-size: 15.5px;
       }
-      .rendering p.hi { font-family: var(--deva); line-height: 1.95; }
+      /* 0.9 of the English above it. Devanagari at an equal px reads larger —
+         bigger x-height, and the shirorekha closes the top of every letter, so
+         the line carries more ink. Matching the numbers makes the two
+         translations look unequal in weight. */
+      .rendering p.hi { font-family: var(--deva); font-size: 14px; line-height: 1.9; }
+      .card.muted .rendering p.hi { font-size: 13px; }
     `,
   ],
 })

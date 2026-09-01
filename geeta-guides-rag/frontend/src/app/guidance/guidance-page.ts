@@ -144,8 +144,13 @@ const CHIPS = [
                 <span class="badge">the answer</span>
               </div>
               @for (v of g.teaching; track v.id) {
-                <!-- A curated verse may carry the verse it replies to, so the
-                     exchange reads as an exchange. -->
+                <!-- A verse may carry the question it answers, so the exchange
+                     reads as an exchange. Set on both routes — by hand for a
+                     curated plan, and from the speaker labels for a retrieved
+                     verse whose immediate predecessor is Arjuna (18 of 573;
+                     see build_pairs). Keyed off v.asks, not off g.curated, so
+                     the two routes render identically wherever the text
+                     supports the pairing. -->
                 @if (v.asks; as q) {
                   <div class="pair">
                     <p class="pair-note">Arjuna asks</p>

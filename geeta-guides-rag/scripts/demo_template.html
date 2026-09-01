@@ -38,6 +38,35 @@ body{
 .banner{border:1px dashed rgba(35,168,154,.4);border-radius:9px;
   padding:13px 16px;margin-bottom:30px;background:rgba(35,168,154,.05)}
 .banner b{color:var(--peacock)}
+.deva-inline{font-family:var(--deva);font-size:.9em}
+/* 0.9 of the English beside it (.rend p is 15.5px, muted 14.5px). Explicit px
+   rather than em: em would resolve against .rend, not against the 15.5px this
+   paragraph actually renders at.
+   Selectors are qualified with .rend p on purpose — a bare .hi-body is (0,1,0)
+   and loses to .rend p (0,1,1) further down the sheet, so the override would
+   silently do nothing. */
+.rend p.hi-body{font-family:var(--deva);font-size:14px;line-height:1.9}
+.card.muted .rend p.hi-body{font-size:13px}
+/* Why a verse can report a Hindi match and show no Hindi. */
+.lang-gap{margin:12px 0 0;font:11px var(--mono);color:var(--faint);
+  border-left:2px solid rgba(233,184,80,.28);padding-left:9px;line-height:1.6}
+/* Sits under the banner, before the questions: what a reader needs to know
+   about the text before reading any of it. */
+.disclaimer{margin:14px 0 0;padding:14px 18px;border-radius:8px;
+  border:1px dashed rgba(35,168,154,.42)}
+.disclaimer p{margin:0;font:13px/1.7 var(--serif);color:var(--faint)}
+.disclaimer b{color:var(--peacock);font-weight:600}
+.disclaimer b.lang{color:var(--gold);font-weight:600}
+/* Devanagari set at the same px as Latin reads noticeably larger — bigger
+   x-height, plus the shirorekha closing the top of every letter. 0.9em brings
+   हिन्दी back to the visual weight of the English beside it. Ratio, not a fixed
+   size, so it holds if the surrounding text is ever resized. */
+.disclaimer b.deva{font-family:var(--deva);font-size:.9em}
+/* Names the script for a reader who can't read it. A gloss, not a second
+   label — so it inherits the body colour instead of picking up the gold.
+   Note --dim (#baa88d) is LIGHTER than the --faint (#7e6c56) this paragraph
+   uses, so reaching for it here would brighten the gloss, not quiet it. */
+.disclaimer .gloss{color:inherit;font-size:.92em}
 .banner p{margin:0;font-size:13px;color:var(--dim);line-height:1.55}
 .banner a{color:var(--gold)}
 
@@ -132,6 +161,11 @@ h1 .om{color:var(--gold);margin-right:12px;text-shadow:0 0 26px rgba(233,184,80,
 .rend p{margin:7px 0 0;line-height:1.75;font-family:var(--serif);font-size:15.5px}
 .card.muted .rend p{font-size:14.5px;color:var(--dim)}
 
+/* An exchange, not two adjacent verses: a peacock rail ties question to answer. */
+.pair{border-left:2px solid var(--peacock-deep);padding-left:14px;margin:0 0 16px 2px}
+.pair-note{font:10px var(--mono);color:var(--peacock);margin:0 0 9px;
+  letter-spacing:.14em;text-transform:uppercase}
+
 .meta{margin-top:26px;font:11px var(--mono);color:var(--faint)}
 footer{margin-top:46px;padding-top:20px;border-top:1px solid var(--line);
   color:var(--faint);font-size:13px;text-align:center}
@@ -151,9 +185,19 @@ footer p{max-width:64ch;margin:8px auto}
     <p>
       <b>Recorded demo.</b> These are real responses from the retrieval pipeline, captured by
       running each question against all 700 verses and saving the result. This page is a single
-      static file — no backend, no API keys, no network calls. Only public-domain text is shown:
-      the Sanskrit, and Shri Purohit Swami's English translation.
+      static file — no backend, no API keys, no network calls.
+      One question (<b class="deva-inline">विषाद</b>) is answered from a hand-chosen set rather
+      than by similarity, and says so where the scores would be.
       <a href="https://github.com/mamta-epili/gita-guidance">Source on GitHub &rarr;</a>
+    </p>
+  </div>
+
+  <div class="disclaimer">
+    <p>
+      <b>Languages.</b> Every verse carries its meaning in <b class="lang">English</b> and
+      <b class="lang deva">हिन्दी</b> <span class="gloss">(Hindi)</span>, and both are searched. This published page shows the Sanskrit
+      and the English only — the Hindi translations are under copyright. The full version,
+      run locally, displays both.
     </p>
   </div>
 
@@ -225,15 +269,38 @@ function card(v, muted) {
     ? '<div class="rend"><span class="whom">English &middot; ' + esc(v.english.translator) +
       "</span><p>" + esc(v.english.text) + "</p></div>"
     : "";
+  // Rendered when present, which on the published build is never: every Hindi
+  // translation in the corpus is under copyright, so public_only drops them.
+  // Kept so a local build (GITA_PUBLIC_ONLY=0) matches the Angular app, and so
+  // a freely-licensed Hindi would need no template change.
+  const hi = v.hindi
+    ? '<div class="rend"><span class="whom">हिन्दी &middot; ' + esc(v.hindi.translator) +
+      '</span><p class="hi-body">' + esc(v.hindi.text) + "</p></div>"
+    : "";
+  // Curated verses carry no score — nothing was ranked — so the whole element
+  // is dropped rather than rendered empty.
+  const score = v.score != null
+    ? '<span class="score">' + v.score.toFixed(3) +
+      (v.matched_lang ? "<em>" + esc(v.matched_lang) + "</em>" : "") + "</span>"
+    : "";
   return '<article class="card' + (muted ? " muted" : "") + '">' +
     '<div class="chead"><span class="cite">' + esc(v.citation) +
-      ' <em class="who">' + esc(v.speaker_name) + "</em></span>" +
-      '<span class="score">' + (v.score != null ? v.score.toFixed(3) : "") +
-      (v.matched_lang ? "<em>" + esc(v.matched_lang) + "</em>" : "") + "</span></div>" +
+      ' <em class="who">' + esc(v.speaker_name) + "</em></span>" + score + "</div>" +
     (v.sanskrit ? '<p class="deva">' + esc(v.sanskrit) + "</p>" : "") +
     (v.iast ? '<p class="iast">' + esc(v.iast) + "</p>" : "") +
-    (en ? '<hr class="rule">' + en : "") +
+    (en || hi ? '<hr class="rule">' + en + hi : "") +
+    (v.matched_lang === "hi" && !v.hindi
+      ? '<p class="lang-gap">Matched on the Hindi, which is not published here.</p>'
+      : "") +
     "</article>";
+}
+
+/** A lead verse may carry `asks`, the verse it replies to. */
+function leadCard(v) {
+  if (!v.asks) return card(v, false);
+  return '<div class="pair"><p class="pair-note">Arjuna asks</p>' +
+    card(v.asks, true) +
+    '<p class="pair-note">Krishna answers</p>' + card(v, false) + "</div>";
 }
 
 let openDialogue = true;
@@ -245,34 +312,48 @@ function render(i) {
   const btns = document.querySelectorAll(".q");
   for (let k = 0; k < btns.length; k++) btns[k].classList.toggle("on", k === i);
 
+  // A curated answer brings its own headings — "You are not the first" reads
+  // very differently from "the same difficulty, as Arjuna put it".
+  const c = r.curated;
+  const leadSa = c ? c.lead_heading_sa : "श्रीभगवानुवाच";
+  const leadEn = c ? c.lead_heading_en : "The Blessed Lord said";
+  const followSa = c ? c.follow_heading_sa : "अर्जुन उवाच";
+  const followEn = c ? c.follow_heading_en : "the same difficulty, as Arjuna put it";
+  const followNote = c
+    ? c.follow_note
+    : "These matched the words most closely — because Arjuna is describing the same " +
+      "trouble. They are the question, not the teaching.";
+
   const teaching = r.teaching.length
     ? '<section class="teaching"><div class="thead"><div class="titles">' +
-      '<span class="sa">श्रीभगवानुवाच</span>' +
-      '<span class="say">The Blessed Lord said</span></div>' +
+      '<span class="sa">' + esc(leadSa) + "</span>" +
+      '<span class="say">' + esc(leadEn) + "</span></div>" +
       '<span class="badge">the answer</span></div>' +
-      r.teaching.map(function (v) { return card(v, false); }).join("") +
+      r.teaching.map(leadCard).join("") +
       "</section>"
     : "";
 
   const dialogue = r.dialogue.length
     ? '<section class="dialogue"><button class="dhead" id="dtoggle" aria-expanded="' +
       openDialogue + '"><span class="caret">' + (openDialogue ? "−" : "+") +
-      '</span><span class="sa">अर्जुन उवाच</span><span class="sep">&middot;</span>' +
-      '<span class="say">the same difficulty, as Arjuna put it (' + r.dialogue.length +
+      '</span><span class="sa">' + esc(followSa) + '</span><span class="sep">&middot;</span>' +
+      '<span class="say">' + esc(followEn) + " (" + r.dialogue.length +
       ")</span></button>" +
       (openDialogue
-        ? '<p class="note" style="margin:18px 0">These matched the words most closely — ' +
-          "because Arjuna is describing the same trouble. They are the question, not the " +
-          "teaching.</p>" + r.dialogue.map(function (v) { return card(v, true); }).join("")
+        ? '<p class="note" style="margin:18px 0">' + esc(followNote) + "</p>" +
+          r.dialogue.map(function (v) { return card(v, true); }).join("")
         : "") +
       "</section>"
     : "";
 
+  const count = r.teaching.length + r.dialogue.length;
+  const how = c
+    ? count + " verses &middot; chosen, not ranked"
+    : count + " of " + r.pool_size + " retrieved &middot; " + esc(DATA.model);
+
   document.getElementById("out").innerHTML =
     '<p class="asked">' + esc(r.question) + "</p>" + teaching + dialogue +
-    '<p class="meta">' + (r.teaching.length + r.dialogue.length) + " of " + r.pool_size +
-    " retrieved &middot; " + esc(DATA.model) + " &middot; recorded " + esc(DATA.generated) +
-    "</p>";
+    '<p class="meta">' + how + " &middot; recorded " + esc(DATA.generated) + "</p>";
 
   const t = document.getElementById("dtoggle");
   if (t) t.addEventListener("click", function () { openDialogue = !openDialogue; render(current); });
