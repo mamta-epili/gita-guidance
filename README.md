@@ -119,3 +119,8 @@ fields, which is enough for the app to run. Build the full local corpus with
 
 The character model was built following Andrej Karpathy's
 [*Let's build GPT*](https://www.youtube.com/watch?v=kCc8FmEb1nY).
+
+**Licence:** the code is [MIT](LICENSE). The scripture is not mine to license —
+the Sanskrit and the English translations here are public domain, and the Hindi
+translations are copyrighted and therefore not in this repository. The
+[LICENSE](LICENSE) file spells out which is which.
