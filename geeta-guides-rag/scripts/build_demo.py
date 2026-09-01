@@ -30,6 +30,7 @@ import argparse
 import datetime as dt
 import json
 import os
+import shutil
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -97,6 +98,8 @@ QUESTIONS = [
 def main() -> None:
     ap = argparse.ArgumentParser(description="Build the standalone demo page.")
     ap.add_argument("--out", default=OUT)
+    ap.add_argument("--no-index", action="store_true",
+                    help="skip the index.html copy that makes the Pages root URL work")
     ap.add_argument("--k", type=int, default=4, help="Krishna verses per question")
     ap.add_argument("--context-k", type=int, default=2, help="Arjuna verses per question")
     args = ap.parse_args()
@@ -185,8 +188,20 @@ def main() -> None:
     with open(args.out, "w", encoding="utf-8") as f:
         f.write(html)
 
+    # GitHub Pages serves index.html at the directory root, so without this the
+    # bare /gita-guidance/ URL 404s and only /demo.html resolves. Written here
+    # rather than by hand: a manual `cp` is correct exactly once and silently
+    # stale after the next rebuild, which is how the published root ended up
+    # showing links that had already been removed from the demo.
+    if not args.no_index:
+        index = os.path.join(os.path.dirname(args.out) or ".", "index.html")
+        if os.path.abspath(index) != os.path.abspath(args.out):
+            shutil.copyfile(args.out, index)
+
     size = os.path.getsize(args.out) / 1024
     print(f"\nwrote {args.out} ({size:.0f} KB, self-contained)")
+    if not args.no_index:
+        print(f"  copied to {index}  (Pages root)")
     print(f"  {len(answers)} questions, "
           f"{sum(len(a['teaching']) + len(a['dialogue']) for a in answers)} verses, "
           f"0 restricted")
