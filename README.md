@@ -54,13 +54,23 @@ operation with an external corpus and a top-k instead of a softmax.
   matches a question to *text that resembles a question* — which is Arjuna, not
   Krishna. Every verse is labelled by speaker, so Krishna's answer leads and
   Arjuna's lament is shown separately.
-- **Crisis triage, before retrieval.** This app invites people to type how they
+- **Exchanges rendered as exchanges.** The retriever scores verses one at a
+  time and cannot know that 6:35 is a reply to 6:34. The speaker labels can:
+  where a Krishna verse directly follows an Arjuna one, both are shown as a
+  question and its answer. Only 18 of 573 Krishna verses qualify, and the walk
+  stops at the first Krishna verse it crosses — so 18:58, which sits 57 verses
+  into an unbroken monologue, is never captioned as a reply to anything.
+  `make pairs` lists every claim it would make.
+- **Curated routing, before retrieval.** This app invites people to type how they
   feel, and the corpus is full of verses that are actively wrong to show someone
   in danger — 2:22 likens dying to changing clothes, 2:14 says endure it bravely.
   Retrieval matches those beautifully to *"I don't want to live any more."* So a
-  rule-based check runs **before embedding**: self-harm and abuse return Indian
-  helplines and no verses at all, and the query never reaches the model. 38 test
-  cases, including 13 that must *not* trigger. `make safety`.
+  rule-based check runs **before embedding**, and for that one category it
+  replaces the ranking with a hand-chosen plan: Krishna's 6:35, 6:40 and 18:66
+  lead, Arjuna's own lament follows under *"You are not the first."* Nothing is
+  blocked and no question is refused — the Gita exists to answer exactly this.
+  33 test cases: 18 that must route to the curated plan, 15 that must not.
+  `make safety`.
 - **`/lab`** — the character model, live: next-character probabilities, attention
   per head, and the causal mask drawn as a picture.
 
@@ -104,10 +114,15 @@ make frontend       # terminal 2 → :4200
 
 Honest about the gap:
 
-- **No refusal path.** Ask about cryptocurrency and it will confidently return
-  five verses.
-- **Evaluation set is 9 questions** against a target of 60, plus 15 refusal
-  cases. Every number above is indicative, not yet trustworthy.
+- **Nothing is out of scope, including things that should be.** Refusing a
+  question about despair was a deliberate non-goal — the Gita exists to answer
+  it. But ask about cryptocurrency and the same openness returns five verses
+  with a straight face, and measurement says score can't fix that: the best
+  out-of-corpus question scores 0.56 against a median answerable 0.52, so there
+  is no threshold to refuse on.
+- **Evaluation set is 16 questions** — 9 answerable from the corpus, 7 not —
+  against a target of 60. The hit@10 and MRR figures above are over those 9, so
+  a single verse moves them by 11 points. Indicative, not yet trustworthy.
 - **Not deployed.** Localhost, two terminals, a 2.2 GB model download.
 
 ---
