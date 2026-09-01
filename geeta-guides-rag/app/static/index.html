@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>char-GPT inspector</title>
+<style>
+  :root{
+    --bg:#100e0c; --panel:#191512; --line:#302820;
+    --ink:#efe6d8; --dim:#a09484; --faint:#6b6157;
+    --gold:#d9a94c; --saffron:#e0803a; --deep:#8c5a2b; --ok:#7fae6a;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+  a{color:var(--gold)}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+
+  header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:26px}
+  h1{margin:0 0 6px;font-size:23px;font-weight:600;letter-spacing:.2px}
+  h1 .om{color:var(--saffron);margin-right:8px}
+  .sub{color:var(--dim);font-size:14px;max-width:64ch}
+  .stats{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+  .chip{font:12px/1 var(--mono);color:var(--gold);background:#1e1813;
+    border:1px solid var(--line);border-radius:3px;padding:6px 9px}
+  .chip b{color:var(--ink);font-weight:600}
+
+  section{margin:30px 0}
+  h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--saffron);margin:0 0 4px;font-weight:600}
+  .note{color:var(--faint);font-size:13px;margin:0 0 14px;max-width:74ch}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px}
+  textarea{width:100%;min-height:84px;resize:vertical;background:#0c0a09;
+    color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:11px;
+    font:14px/1.6 var(--mono)}
+  textarea:focus{outline:none;border-color:var(--deep)}
+
+  .row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  label{font-size:12px;color:var(--dim);display:flex;gap:8px;align-items:center}
+  input[type=range]{accent-color:var(--saffron);width:130px}
+  select{background:#0c0a09;color:var(--ink);border:1px solid var(--line);
+    border-radius:4px;padding:5px 8px;font:12px var(--mono)}
+  button{background:var(--deep);color:#fff;border:0;border-radius:4px;
+    padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer}
+  button:hover{background:var(--saffron)}
+  button:disabled{background:#2a231d;color:var(--faint);cursor:default}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--dim)}
+  button.ghost:hover{border-color:var(--deep);color:var(--ink);background:transparent}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+
+  /* probability bars */
+  .bars{margin-top:4px}
+  .bar{display:grid;grid-template-columns:34px 1fr 60px;gap:9px;align-items:center;
+    margin-bottom:5px}
+  .bar .ch{font:13px var(--mono);color:var(--gold);text-align:center;
+    background:#0c0a09;border:1px solid var(--line);border-radius:3px;padding:2px 0}
+  .bar .track{height:15px;background:#0c0a09;border-radius:2px;overflow:hidden}
+  .bar .fill{height:100%;background:linear-gradient(90deg,var(--deep),var(--gold))}
+  .bar .pc{font:11px var(--mono);color:var(--dim);text-align:right}
+
+  .metric{display:flex;justify-content:space-between;font:12px var(--mono);
+    color:var(--dim);padding:5px 0;border-bottom:1px solid #221c17}
+  .metric b{color:var(--ink);font-weight:500}
+
+  /* attention over characters */
+  .attn{font:13px/2.1 var(--mono);word-break:break-all;margin-top:4px}
+  .attn span{padding:2px 0;border-radius:2px}
+  .attn .cur{outline:1px solid var(--saffron)}
+
+  /* causal matrix */
+  #matrix{display:grid;gap:1px;margin-top:6px}
+  #matrix div{width:100%;aspect-ratio:1}
+
+  /* output */
+  pre.out{background:#0c0a09;border:1px solid var(--line);border-radius:4px;
+    padding:14px;font:13px/1.75 var(--mono);white-space:pre-wrap;word-break:break-word;
+    min-height:150px;max-height:340px;overflow:auto;margin:0;color:var(--ink)}
+  .cursor{display:inline-block;width:7px;background:var(--saffron);
+    animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  .vocab{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}
+  .vocab span{font:11px var(--mono);background:#0c0a09;border:1px solid var(--line);
+    border-radius:2px;padding:3px 5px;color:var(--dim)}
+
+  .warn{color:var(--saffron)}
+  .callout{border-left:2px solid var(--deep);padding:2px 0 2px 14px;
+    color:var(--dim);font-size:13px;margin:14px 0}
+  footer{margin-top:46px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--faint);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1><span class="om">ॐ</span>char-GPT inspector</h1>
+  <div class="sub">
+    A character-level transformer, written from scratch and trained on 124,135
+    characters of the Bhagavad Gita. This page runs that model locally and shows
+    what it is doing — the next-character distribution, and what each attention
+    head is looking at.
+  </div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<section>
+  <h2>1 · One forward pass</h2>
+  <p class="note">
+    Type anything. Every keystroke runs a full forward pass and shows the model's
+    prediction for the <em>next</em> character. This distribution is the model's
+    entire output — generation is just sampling from it, appending, and running again.
+  </p>
+  <div class="panel">
+    <!-- Grammarly and similar extensions inject overlays into textareas. These
+         attributes ask them not to; they also stop iOS autocorrecting your
+         prompt, which would silently change what the model is being fed. -->
+    <textarea id="prompt" spellcheck="false" autocorrect="off" autocapitalize="off"
+      data-gramm="false" data-gramm_editor="false"
+      data-enable-grammarly="false">Arjuna said: my mind is</textarea>
+    <div class="row">
+      <label>temperature
+        <input type="range" id="temp" min="0.1" max="2" step="0.05" value="1">
+        <b id="tempv" style="color:var(--gold);font:12px var(--mono)">1.00</b>
+      </label>
+      <span id="dropped" class="warn" style="font:12px var(--mono)"></span>
+    </div>
+
+    <div class="grid2" style="margin-top:16px">
+      <div>
+        <h2 style="font-size:11px">Next character — top 12</h2>
+        <div class="bars" id="bars"></div>
+      </div>
+      <div>
+        <h2 style="font-size:11px">Measurements</h2>
+        <div id="metrics"></div>
+        <p class="note" style="margin-top:12px">
+          Entropy is how undecided the model is, in bits. log₂(79) ≈ 6.30 bits
+          means "no idea"; near 0 means near-certainty. Watch it collapse after
+          a space, when only a few letters can plausibly start a word.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>2 · What the attention heads are looking at</h2>
+  <p class="note">
+    Shading shows how much attention the <strong>final</strong> position paid to
+    every earlier character when predicting the next one. Four layers, four heads
+    each — sixteen different views of the same text. Notice that nothing ever
+    attends to its right: that is the causal mask you wrote.
+  </p>
+  <div class="panel">
+    <div class="row" style="margin-top:0">
+      <label>layer <select id="layer"></select></label>
+      <label>head <select id="head"></select></label>
+      <label><input type="checkbox" id="allheads"> average all heads in layer</label>
+    </div>
+    <div class="attn" id="attn"></div>
+  </div>
+</section>
+
+<section>
+  <h2>3 · Generate</h2>
+  <p class="note">
+    One character per forward pass, streamed at the speed it is produced. The
+    text will have the shape of Arnold's blank verse — capitalised line starts,
+    plausible line lengths, pronounceable non-words — and will mean nothing.
+    That is the correct output for a 3.26M-parameter character model.
+  </p>
+  <div class="panel">
+    <div class="row" style="margin-top:0">
+      <button id="gen">Generate 240 characters</button>
+      <button id="stop" class="ghost" disabled>Stop</button>
+      <label>from the prompt above</label>
+    </div>
+    <pre class="out" id="out"></pre>
+  </div>
+</section>
+
+<section>
+  <h2>4 · Causality, as a picture</h2>
+  <p class="note">
+    Layer 0, head 0. Row <em>t</em> is what position <em>t</em> attended to.
+    The upper triangle is empty because <code>masked_fill(tril == 0, -inf)</code>
+    made it exactly zero before the softmax — a position cannot see its future.
+    Every row sums to 1.
+  </p>
+  <div class="panel"><div id="matrix"></div></div>
+</section>
+
+<section>
+  <h2>5 · The whole vocabulary</h2>
+  <p class="note">
+    Every symbol this model can represent. Not a word among them — it learned
+    "Arjuna" as seven statistical events. Anything outside this set is not a
+    lookup miss, it is outside the model's universe, and typing it above gets
+    silently dropped.
+  </p>
+  <div class="panel"><div class="vocab" id="vocab"></div></div>
+</section>
+
+<footer>
+  <p><strong>What this is.</strong> A demo of the foundations, running on your
+  machine. No API calls, no network.</p>
+  <p><strong>What it is not.</strong> Not a question-answering system, and not
+  usable as one. Its context window is 256 <em>characters</em> — one verse plus a
+  short question fills it entirely, leaving no room to answer in. Retrieval over
+  the 700-verse corpus is a separate system; this is the thing that explains why
+  that system needs embeddings.</p>
+</footer>
+
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let INFO = null, LAST = null, ES = null, timer = null;
+
+function heat(w, max){
+  if(!max) return 'transparent';
+  const t = Math.pow(w / max, 0.55);            // gamma: make small weights visible
+  return `rgba(224,128,58,${(t*0.92).toFixed(3)})`;
+}
+
+async function loadInfo(){
+  INFO = await (await fetch('/api/info')).json();
+  $('#stats').innerHTML = [
+    ['params', INFO.params_m + 'M'], ['vocab', INFO.vocab_size],
+    ['layers', INFO.n_layer], ['heads', INFO.n_head],
+    ['n_embd', INFO.n_embd], ['head_size', INFO.head_size],
+    ['context', INFO.block_size + ' chars'], ['device', INFO.device],
+  ].map(([k,v]) => `<span class="chip">${k} <b>${v}</b></span>`).join('');
+
+  $('#layer').innerHTML = Array.from({length:INFO.n_layer},(_,i)=>`<option>${i}</option>`).join('');
+  $('#head').innerHTML  = Array.from({length:INFO.n_head}, (_,i)=>`<option>${i}</option>`).join('');
+  $('#vocab').innerHTML = INFO.vocab.map(c => {
+    const label = c === '\n' ? '\\n' : c === ' ' ? '␣' : c;
+    return `<span>${label.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span>`;
+  }).join('');
+}
+
+async function inspect(){
+  const text = $('#prompt').value;
+  const r = await fetch('/api/step', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({text, temperature: parseFloat($('#temp').value), attention:true})
+  });
+  LAST = await r.json();
+
+  const max = LAST.top.length ? LAST.top[0].prob : 1;
+  $('#bars').innerHTML = LAST.top.map(t => {
+    const label = t.char === '\n' ? '\\n' : t.char === ' ' ? '␣' : t.char;
+    return `<div class="bar">
+      <div class="ch">${label.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
+      <div class="track"><div class="fill" style="width:${(t.prob/max*100).toFixed(1)}%"></div></div>
+      <div class="pc">${(t.prob*100).toFixed(1)}%</div></div>`;
+  }).join('');
+
+  const pct = (LAST.entropy_bits / LAST.max_entropy_bits * 100).toFixed(0);
+  $('#metrics').innerHTML = [
+    ['entropy', `${LAST.entropy_bits} bits <span style="color:var(--faint)">of ${LAST.max_entropy_bits} (${pct}%)</span>`],
+    ['context used', `${LAST.context_used} / ${INFO.block_size}`],
+    ['characters dropped by crop', LAST.context_dropped],
+    ['forward pass', LAST.ms + ' ms'],
+  ].map(([k,v]) => `<div class="metric"><span>${k}</span><b>${v}</b></div>`).join('');
+
+  $('#dropped').textContent = LAST.dropped_chars
+    ? `${LAST.dropped_chars} character(s) not in the model's vocabulary were dropped`
+    : '';
+
+  drawAttn();
+  drawMatrix();
+}
+
+function drawAttn(){
+  if(!LAST || !LAST.attention){ $('#attn').innerHTML = ''; return; }
+  const L = +$('#layer').value, H = +$('#head').value;
+  const layer = LAST.attention[L];
+  let w = $('#allheads').checked
+    ? layer[0].map((_,i) => layer.reduce((s,h) => s + h[i], 0) / layer.length)
+    : layer[H];
+
+  const chars = LAST.context_chars;
+  const show = 220;
+  const start = Math.max(0, chars.length - show);
+  const max = Math.max(...w.slice(start));
+
+  $('#attn').innerHTML = chars.slice(start).map((c,i) => {
+    const idx = start + i;
+    const label = c === '\n' ? '⏎\n' : c === ' ' ? '·' : c;
+    const esc = label.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    const isLast = idx === chars.length - 1;
+    return `<span class="${isLast?'cur':''}" style="background:${heat(w[idx],max)}"
+      title="pos ${idx} · ${(w[idx]*100).toFixed(2)}%">${esc}</span>`;
+  }).join('');
+}
+
+function drawMatrix(){
+  if(!LAST || !LAST.attention_matrix_l0h0){ return; }
+  const m = LAST.attention_matrix_l0h0, n = m.length;
+  const max = Math.max(...m.flat());
+  $('#matrix').style.gridTemplateColumns = `repeat(${n},1fr)`;
+  $('#matrix').innerHTML = m.map((row,r) =>
+    row.map((v,c) => `<div style="background:${c<=r?heat(v,max):'#0a0908'}"
+      title="pos ${r} → pos ${c}: ${(v*100).toFixed(2)}%"></div>`).join('')
+  ).join('');
+}
+
+function debounced(){ clearTimeout(timer); timer = setTimeout(inspect, 180); }
+
+$('#prompt').addEventListener('input', debounced);
+$('#temp').addEventListener('input', e => {
+  $('#tempv').textContent = parseFloat(e.target.value).toFixed(2); debounced();
+});
+$('#layer').addEventListener('change', drawAttn);
+$('#head').addEventListener('change', drawAttn);
+$('#allheads').addEventListener('change', drawAttn);
+
+$('#gen').addEventListener('click', () => {
+  if(ES) ES.close();
+  const prompt = $('#prompt').value;
+  const t = parseFloat($('#temp').value);
+  $('#out').textContent = '';
+  $('#gen').disabled = true; $('#stop').disabled = false;
+
+  const head = document.createElement('span');
+  head.style.color = 'var(--faint)';
+  head.textContent = prompt;
+  $('#out').appendChild(head);
+  const body = document.createElement('span');
+  $('#out').appendChild(body);
+  const cur = document.createElement('span');
+  cur.className = 'cursor'; cur.innerHTML = '&nbsp;';
+  $('#out').appendChild(cur);
+
+  ES = new EventSource(`/api/stream?prompt=${encodeURIComponent(prompt)}&n=240&temperature=${t}`);
+  ES.onmessage = ev => {
+    const d = JSON.parse(ev.data);
+    if(d.type === 'char'){
+      body.textContent += d.char;
+      $('#out').scrollTop = $('#out').scrollHeight;
+    } else if(d.type === 'done'){
+      cur.remove(); ES.close(); ES = null;
+      $('#gen').disabled = false; $('#stop').disabled = true;
+    }
+  };
+  ES.onerror = () => {
+    cur.remove(); if(ES){ ES.close(); ES = null; }
+    $('#gen').disabled = false; $('#stop').disabled = true;
+  };
+});
+
+$('#stop').addEventListener('click', () => {
+  if(ES){ ES.close(); ES = null; }
+  document.querySelectorAll('.cursor').forEach(c => c.remove());
+  $('#gen').disabled = false; $('#stop').disabled = true;
+});
+
+loadInfo().then(inspect).catch(e => {
+  document.body.insertAdjacentHTML('afterbegin',
+    `<pre style="color:#e0803a;padding:20px">Could not load the model.\n\n${e}\n\n`
+    + `Is the checkpoint present? See README.md</pre>`);
+});
+</script>
+</body>
+</html>

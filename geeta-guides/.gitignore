@@ -1,0 +1,49 @@
+# virtual environments
+.venv/
+venv/
+env/
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# model artifacts — regenerate with `make train`
+checkpoints/
+*.bin
+*.pt
+*.pth
+*.ckpt
+
+# ---------------------------------------------------------------------------
+# CORPUS — read this before changing it
+# ---------------------------------------------------------------------------
+# data/verses.json contains the Hindi translations, which are COPYRIGHTED
+# (Gita Press, Chinmaya Mission). 0 of 700 are redistributable. Committing it to
+# a public repo is publishing them. It is ignored here so that cannot happen by
+# accident — rebuild it locally with `make verses`.
+data/verses.json
+#
+# verses.public.json IS tracked: same 700 verses, Sanskrit (ancient, public
+# domain) plus Purohit Swami's English (d. 1941, public domain), with the
+# restricted renderings stripped. Safe to publish, and enough for a clone to run.
+#
+# If this repo is PRIVATE and you want the full corpus versioned, delete the
+# `data/verses.json` line above.
+
+# derived from the corpus, and 5 MB — rebuild with `make embed`
+data/embeddings.npz
+
+# build caches
+data/raw_2388.txt
+data/cache/
+
+# generated samples
+samples/
+*.log
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/

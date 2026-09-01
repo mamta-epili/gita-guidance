@@ -1,0 +1,9 @@
+torch>=2.0
+# torch prints "Failed to initialize NumPy" on import without this. Harmless for
+# what we do here (no .numpy() calls), but the warning is noise on every start.
+numpy>=1.24
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.0
+certifi
+sentence-transformers>=3.0

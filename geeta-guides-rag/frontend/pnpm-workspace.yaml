@@ -1,0 +1,19 @@
+# pnpm 10+ blocks dependency postinstall scripts by default, and Angular's build
+# needs esbuild's (it links the platform-specific binary). These are allow-listed
+# here so a fresh clone installs without an interactive `pnpm approve-builds`.
+#
+# Schema note: pnpm 11 uses `allowBuilds` (a map of name -> boolean). pnpm 10
+# used `onlyBuiltDependencies` (a list). If you are on pnpm 10 and installs still
+# report ignored builds, swap this block for:
+#
+#   onlyBuiltDependencies:
+#     - esbuild
+#     - '@parcel/watcher'
+#     - lmdb
+#     - msgpackr-extract
+#
+allowBuilds:
+  esbuild: true
+  '@parcel/watcher': true
+  lmdb: true
+  msgpackr-extract: true

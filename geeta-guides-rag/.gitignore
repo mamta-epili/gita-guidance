@@ -1,0 +1,23 @@
+# node
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+*.tsbuildinfo
+
+# python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Background audio is yours to supply — see frontend/public/audio/README.md.
+# Not ignored: a track you have the rights to SHOULD be committed so the app
+# works on a fresh clone. Just make sure it is one you can actually license.
+# Uncomment if you would rather keep audio out of the repo:
+# frontend/public/audio/*.mp3
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,220 @@
+/* ===========================================================================
+   Krishna palette — warm.
+
+     brown-black ground   aged palm-leaf, temple stone, lamp-lit interior
+     marigold gold        his pitambara, the dhoti
+     peacock teal         the mor-pankh in his crown
+     vermillion           kumkum, used sparingly
+     warm cream           manuscript ink, for body text
+
+   No blue in the page ground. His complexion appears only as the jewel at the
+   centre of the peacock feather, where it belongs.
+
+   Everything is a token so the lab page and the guidance page cannot drift.
+   =========================================================================== */
+:root {
+  /* grounds — warm, brown undertone, never blue */
+  --bg: #0f0b07;
+  --bg-2: #150f09;
+  --panel: #1b140c;
+  --panel-2: #241a10;
+  --line: #3a2a17;
+  --line-soft: #2a1e11;
+
+  /* ink */
+  --ink: #f3e9d7;
+  --dim: #baa88d;
+  --faint: #7e6c56;
+
+  /* Krishna */
+  --gold: #e9b850;
+  --gold-deep: #b8862f;
+  --saffron: #e8833c;
+  --peacock: #23a89a;
+  --peacock-deep: #0f6f68;
+  --vermillion: #c4472f;
+  /* feather jewel only — not used anywhere in the page ground */
+  --jewel: #3f63b8;
+
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --deva: 'Noto Serif Devanagari', 'Kohinoor Devanagari', 'Devanagari Sangam MN',
+    'Nirmala UI', serif;
+
+  /* kept so existing lab-page rules resolve */
+  --deep: var(--peacock-deep);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font: 15px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  /* Warm washes only: lamp glow low and centre, a faint saffron dawn top-left,
+     a whisper of peacock top-right so the teal accents have something to answer.
+     Fixed so it reads as light in a room rather than texture on the page. */
+  background-image:
+    radial-gradient(1150px 600px at 50% 116%, rgba(233, 184, 80, 0.16), transparent 70%),
+    radial-gradient(900px 500px at 8% -12%, rgba(232, 131, 60, 0.10), transparent 66%),
+    radial-gradient(760px 440px at 94% 2%, rgba(35, 168, 154, 0.07), transparent 64%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* z-index 1 keeps content above the fixed श्री wallpaper in <shree-field>. */
+.wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 22px 90px;
+  position: relative;
+  z-index: 1;
+}
+
+/* --- type ---------------------------------------------------------------- */
+h1 {
+  margin: 0 0 8px;
+  font-family: var(--serif);
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+h1 .om {
+  color: var(--gold);
+  margin-right: 12px;
+  text-shadow: 0 0 26px rgba(233, 184, 80, 0.45);
+}
+
+h2 {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--peacock);
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.sub {
+  color: var(--dim);
+  font-size: 15px;
+  max-width: 62ch;
+  font-family: var(--serif);
+  line-height: 1.7;
+}
+.note { color: var(--faint); font-size: 13px; margin: 0 0 14px; max-width: 74ch; }
+
+/* --- surfaces ------------------------------------------------------------ */
+.panel {
+  background: linear-gradient(180deg, var(--panel) 0%, var(--bg-2) 100%);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 18px 40px -28px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+section { margin: 38px 0; }
+
+/* --- chips --------------------------------------------------------------- */
+.chip {
+  font: 11px/1 var(--mono);
+  color: var(--gold);
+  background: rgba(233, 184, 80, 0.07);
+  border: 1px solid rgba(233, 184, 80, 0.22);
+  border-radius: 4px;
+  padding: 7px 10px;
+  letter-spacing: 0.04em;
+}
+.chip b { color: var(--ink); font-weight: 600; }
+
+/* --- controls ------------------------------------------------------------ */
+textarea {
+  width: 100%;
+  min-height: 84px;
+  resize: vertical;
+  background: rgba(7, 5, 3, 0.7);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 14px 15px;
+  font: 15px/1.7 var(--serif);
+}
+textarea::placeholder { color: var(--faint); font-style: italic; }
+textarea:focus {
+  outline: none;
+  border-color: var(--peacock-deep);
+  box-shadow: 0 0 0 3px rgba(35, 168, 154, 0.12);
+}
+
+select {
+  background: rgba(7, 5, 3, 0.7);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 6px 9px;
+  font: 12px var(--mono);
+}
+
+button {
+  background: linear-gradient(180deg, var(--gold) 0%, var(--gold-deep) 100%);
+  color: #241703;
+  border: 0;
+  border-radius: 6px;
+  padding: 11px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 8px 22px -12px rgba(233, 184, 80, 0.6);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+button:active { transform: translateY(0); }
+button:disabled {
+  background: #241a10; color: var(--faint); box-shadow: none;
+  cursor: default; transform: none; filter: none;
+}
+button.ghost {
+  background: transparent; border: 1px solid var(--line); color: var(--dim);
+  box-shadow: none; font-weight: 500;
+}
+button.ghost:hover {
+  border-color: var(--peacock-deep); color: var(--ink);
+  background: rgba(35, 168, 154, 0.06); filter: none;
+}
+
+.row { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+label { font-size: 12px; color: var(--dim); display: flex; gap: 8px; align-items: center; }
+input[type='range'] { accent-color: var(--peacock); width: 130px; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 820px) { .grid2 { grid-template-columns: 1fr; } }
+
+.warn { color: var(--saffron); font: 12px var(--mono); }
+
+a { color: var(--gold); text-decoration-color: rgba(233, 184, 80, 0.35); }
+a:hover { color: var(--saffron); }
+
+/* --- ornament helpers ---------------------------------------------------- */
+/* A hairline rule fading from both edges, like a manuscript divider. */
+.rule {
+  height: 1px; border: 0; margin: 0;
+  background: linear-gradient(90deg, transparent, var(--line) 18%, var(--line) 82%, transparent);
+}
+
+/* The श्री wallpaper is a component — see ornaments/shree-field.ts, mounted
+   once in the app shell so it is shared by every route. Content sits above it
+   via .wrap's z-index. */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
