@@ -61,9 +61,26 @@ export interface VerseHit {
   hindi: Rendering | null;
   score: number | null;
   matched_lang: string | null;
+  /** The verse this one answers — renders the 6:34 → 6:35 exchange as a pair. */
+  asks?: VerseHit;
+}
+
+/**
+ * Set when the answer was hand-chosen rather than retrieved. Carries its own
+ * section headings, because "You are not the first" reads very differently from
+ * "the same difficulty, as Arjuna put it".
+ */
+export interface Curated {
+  reason: string;
+  lead_heading_sa: string;
+  lead_heading_en: string;
+  follow_heading_sa: string;
+  follow_heading_en: string;
+  follow_note: string;
 }
 
 export interface GuidanceResult {
+  curated: Curated | null;
   question: string;
   model?: string;
   /** Krishna's verses — the answer. */

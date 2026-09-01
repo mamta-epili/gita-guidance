@@ -12,13 +12,15 @@
 #   make serve           backend only, serving the built Angular bundle
 #   make check           load the checkpoint and report, no server
 #   make demo            rebuild docs/demo.html from real retrieval results
+#   make safety          run the crisis-triage test suite
 #   make clean           remove __pycache__ and dist
 
 PY   := $(CURDIR)/.venv/bin/python
 PORT ?= 8000
 PM   ?= pnpm
 
-.PHONY: help setup install backend frontend build serve check clean venv-ok fe-ok
+.PHONY: help setup install backend frontend build serve check clean venv-ok fe-ok \
+        demo safety
 
 help:
 	@sed -n 's/^#   \{0,1\}//p;s/^# \{0,1\}//p' $(MAKEFILE_LIST) | sed -n '3,20p'
@@ -62,3 +64,8 @@ demo: venv-ok
 
 clean:
 	rm -rf app/__pycache__ __pycache__ frontend/dist frontend/.angular
+
+# Safety code does not ship without its tests. 38 cases: self-harm, abuse,
+# acute distress, and — just as important — questions that must NOT trigger.
+safety: venv-ok
+	$(PY) -m app.safety --test

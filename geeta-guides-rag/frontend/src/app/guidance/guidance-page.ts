@@ -138,13 +138,24 @@ const CHIPS = [
               <div class="teaching-head">
                 <orn-feather [size]="30" [rotate]="-10" />
                 <div class="titles">
-                  <span class="sa-head">श्रीभगवानुवाच</span>
-                  <span class="say">The Blessed Lord said</span>
+                  <span class="sa-head">{{ g.curated?.lead_heading_sa || 'श्रीभगवानुवाच' }}</span>
+                  <span class="say">{{ g.curated?.lead_heading_en || 'The Blessed Lord said' }}</span>
                 </div>
                 <span class="badge">the answer</span>
               </div>
               @for (v of g.teaching; track v.id) {
-                <verse-card [verse]="v" />
+                <!-- A curated verse may carry the verse it replies to, so the
+                     exchange reads as an exchange. -->
+                @if (v.asks; as q) {
+                  <div class="pair">
+                    <p class="pair-note">Arjuna asks</p>
+                    <verse-card [verse]="q" [muted]="true" />
+                    <p class="pair-note">Krishna answers</p>
+                    <verse-card [verse]="v" />
+                  </div>
+                } @else {
+                  <verse-card [verse]="v" />
+                }
               }
             </section>
           }
@@ -163,17 +174,21 @@ const CHIPS = [
                 (click)="showDialogue.set(!showDialogue())"
               >
                 <span class="caret" aria-hidden="true">{{ showDialogue() ? '−' : '+' }}</span>
-                <span class="sa-head">अर्जुन उवाच</span>
+                <span class="sa-head">{{ g.curated?.follow_heading_sa || 'अर्जुन उवाच' }}</span>
                 <span class="sep" aria-hidden="true">·</span>
-                <span class="say"
-                  >the same difficulty, as Arjuna put it ({{ g.dialogue.length }})</span
+                <span class="say">{{
+                  g.curated?.follow_heading_en || 'the same difficulty, as Arjuna put it'
+                }}
+                  ({{ g.dialogue.length }})</span
                 >
               </button>
 
               @if (showDialogue()) {
                 <p class="note">
-                  These matched your words most closely — because Arjuna is describing the
-                  same trouble. They are the question, not the teaching.
+                  {{
+                    g.curated?.follow_note ||
+                      'These matched your words most closely — because Arjuna is describing the same trouble. They are the question, not the teaching.'
+                  }}
                 </p>
                 @for (v of g.dialogue; track v.id) {
                   <verse-card [verse]="v" [muted]="true" />
@@ -183,8 +198,12 @@ const CHIPS = [
           }
 
           <p class="note timing">
-            {{ g.verses.length }} of {{ g.pool_size }} retrieved · {{ g.ms }} ms ·
-            {{ g.score_note }}
+            @if (g.curated) {
+              {{ g.verses.length }} verses · chosen, not ranked · {{ g.ms }} ms
+            } @else {
+              {{ g.verses.length }} of {{ g.pool_size }} retrieved · {{ g.ms }} ms
+            }
+            · {{ g.score_note }}
           </p>
         } @else {
           <p class="note">{{ g.note || 'Nothing found.' }}</p>
@@ -389,6 +408,21 @@ const CHIPS = [
       /* Slightly darker than the enclosure, so each verse reads as a card
          resting on a lit surface rather than merging into it. */
       .teaching verse-card .card { background: linear-gradient(160deg, #1d1509 0%, #120d07 74%); }
+
+      /* An exchange, not two adjacent verses: a peacock rail ties the question
+         to the answer so the eye reads them as one unit. */
+      .pair {
+        border-left: 2px solid var(--peacock-deep);
+        padding-left: 14px;
+        margin: 0 0 16px 2px;
+      }
+      .pair-note {
+        font: 10px var(--mono);
+        color: var(--peacock);
+        margin: 0 0 9px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
 
       /* ---- the question, alongside ---------------------------------------- */
       .dialogue { margin-top: 8px; }

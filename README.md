@@ -54,6 +54,13 @@ operation with an external corpus and a top-k instead of a softmax.
   matches a question to *text that resembles a question* — which is Arjuna, not
   Krishna. Every verse is labelled by speaker, so Krishna's answer leads and
   Arjuna's lament is shown separately.
+- **Crisis triage, before retrieval.** This app invites people to type how they
+  feel, and the corpus is full of verses that are actively wrong to show someone
+  in danger — 2:22 likens dying to changing clothes, 2:14 says endure it bravely.
+  Retrieval matches those beautifully to *"I don't want to live any more."* So a
+  rule-based check runs **before embedding**: self-harm and abuse return Indian
+  helplines and no verses at all, and the query never reaches the model. 38 test
+  cases, including 13 that must *not* trigger. `make safety`.
 - **`/lab`** — the character model, live: next-character probabilities, attention
   per head, and the causal mask drawn as a picture.
 
@@ -97,9 +104,6 @@ make frontend       # terminal 2 → :4200
 
 Honest about the gap:
 
-- **No crisis guardrail.** A wellbeing-adjacent app needs to recognise distress
-  and return helplines instead of verses. Not built yet, and it is the first
-  thing to build.
 - **No refusal path.** Ask about cryptocurrency and it will confidently return
   five verses.
 - **Evaluation set is 9 questions** against a target of 60, plus 15 refusal
