@@ -4,6 +4,12 @@ Ask a question in your own words — *"I am stressed, guide me"* — and get the
 shlokas that speak to it, in Sanskrit, Hindi and English, quoted verbatim with
 chapter and verse.
 
+### ▶ [Try the interactive demo](https://mamta-epili.github.io/gita-guidance/demo.html)
+
+Pick a question, read the shlokas Krishna answers it with. No signup, no API
+keys, no backend — a single static page holding recorded responses from the real
+retrieval pipeline. *(Runs entirely in your browser; it makes no network calls.)*
+
 Two halves, built in that order:
 
 | | |

@@ -1,0 +1,1219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gita guidance — interactive demo</title>
+<meta name="description" content="Ask in your own words, get the shlokas that answer. Recorded responses from the real retrieval pipeline. No backend, no API keys.">
+<style>
+:root{
+  --bg:#0f0b07; --bg-2:#150f09; --panel:#1b140c; --panel-2:#241a10;
+  --line:#3a2a17; --line-soft:#2a1e11;
+  --ink:#f3e9d7; --dim:#baa88d; --faint:#7e6c56;
+  --gold:#e9b850; --gold-deep:#b8862f; --saffron:#e8833c;
+  --peacock:#23a89a; --peacock-deep:#0f6f68; --vermillion:#c4472f;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --deva:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari Sangam MN","Nirmala UI",serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;color:var(--ink);background:var(--bg);
+  font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  background-image:
+    radial-gradient(1150px 600px at 50% 116%, rgba(233,184,80,.16), transparent 70%),
+    radial-gradient(900px 500px at 8% -12%, rgba(232,131,60,.10), transparent 66%),
+    radial-gradient(760px 440px at 94% 2%, rgba(35,168,154,.07), transparent 64%);
+  background-attachment:fixed;background-repeat:no-repeat;
+}
+#shree{position:fixed;inset:0;z-index:0;pointer-events:none;user-select:none;overflow:hidden}
+#shree .field{position:absolute;top:-12%;left:-12%;width:124%;height:124%;
+  transform:rotate(-8deg);display:flex;flex-direction:column;justify-content:space-between}
+#shree .line{display:flex;justify-content:space-between;white-space:nowrap}
+#shree .line.odd{padding-left:5.5%}
+#shree span{font-family:var(--deva);font-size:30px;line-height:1;color:rgba(233,184,80,.055)}
+
+.wrap{max-width:1000px;margin:0 auto;padding:40px 22px 90px;position:relative;z-index:1}
+
+.banner{border:1px dashed rgba(35,168,154,.4);border-radius:9px;
+  padding:13px 16px;margin-bottom:30px;background:rgba(35,168,154,.05)}
+.banner b{color:var(--peacock)}
+.banner p{margin:0;font-size:13px;color:var(--dim);line-height:1.55}
+.banner a{color:var(--gold)}
+
+.invocation{text-align:center;margin:6px 0 0}
+.invocation .deva,.invocation .iast{display:flex;flex-wrap:nowrap;justify-content:center;gap:.45em;white-space:nowrap}
+.invocation .deva{font-family:var(--deva);font-size:clamp(13px,2.02vw,21px);line-height:2.05;
+  color:var(--gold);margin:0;text-shadow:0 0 40px rgba(233,184,80,.18)}
+.invocation .iast{font-family:var(--mono);font-size:clamp(9px,1.12vw,11.5px);line-height:1.9;
+  color:var(--peacock);margin:12px 0 0;opacity:.85}
+@media(max-width:620px){
+  .invocation .deva,.invocation .iast{flex-wrap:wrap;gap:0}
+  .invocation .deva span,.invocation .iast span{flex:0 0 100%}
+  .invocation .deva{font-size:17px}.invocation .iast{font-size:10.5px}
+}
+
+.flute{display:block;margin:30px 0}
+
+header{border-bottom:1px solid var(--line-soft);padding-bottom:24px;margin-bottom:28px}
+h1{font-family:var(--serif);font-size:34px;font-weight:500;margin:0 0 8px;letter-spacing:.01em}
+h1 .om{color:var(--gold);margin-right:12px;text-shadow:0 0 26px rgba(233,184,80,.45)}
+.tagline{margin:2px 0 14px;font-family:var(--deva);font-size:13.5px;color:var(--peacock)}
+.sub{color:var(--dim);font-size:15px;font-family:var(--serif);line-height:1.7;margin:0}
+
+.panel{background:linear-gradient(180deg,var(--panel) 0%,var(--bg-2) 100%);
+  border:1px solid var(--line);border-radius:10px;padding:20px;
+  box-shadow:0 18px 40px -28px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.035)}
+
+.qlabel{font:10px var(--mono);letter-spacing:.18em;text-transform:uppercase;
+  color:var(--peacock);margin:0 0 12px}
+.qs{display:flex;flex-wrap:wrap;gap:8px}
+.q{display:inline-flex;align-items:baseline;gap:8px;cursor:pointer;
+  background:rgba(35,168,154,.06);border:1px solid rgba(35,168,154,.28);
+  border-radius:999px;padding:7px 16px;color:inherit;font:inherit;text-align:left}
+.q:hover{background:rgba(233,184,80,.09);border-color:rgba(233,184,80,.42)}
+.q.on{background:rgba(233,184,80,.13);border-color:var(--gold)}
+.q:focus-visible{outline:2px solid var(--peacock);outline-offset:2px}
+.q .sa{font-family:var(--deva);font-size:14px;color:var(--gold)}
+.q .en{font:italic 13px var(--serif);color:var(--peacock)}
+.q.on .en{color:var(--gold)}
+
+.asked{margin:26px 0 0;font-family:var(--serif);font-size:19px;font-style:italic;color:var(--ink)}
+.asked::before{content:"\201C"}.asked::after{content:"\201D"}
+
+.teaching{margin-top:22px;padding:20px 20px 4px;border:1px solid rgba(233,184,80,.3);
+  border-radius:12px;
+  background:radial-gradient(720px 220px at 50% -12%, rgba(233,184,80,.11), transparent 70%),
+    linear-gradient(180deg, rgba(233,184,80,.05), rgba(233,184,80,.012));
+  box-shadow:0 34px 70px -50px rgba(233,184,80,.3)}
+.thead{display:flex;align-items:center;gap:12px;padding-bottom:16px;margin-bottom:18px;
+  border-bottom:1px solid rgba(233,184,80,.22)}
+.thead .titles{display:flex;flex-direction:column;gap:2px;flex:1}
+.thead .sa{font-family:var(--deva);font-size:19px;color:var(--gold)}
+.thead .say{font:italic 13px var(--serif);color:var(--dim)}
+.badge{font:10px var(--mono);text-transform:uppercase;letter-spacing:.16em;color:#241703;
+  background:linear-gradient(180deg,var(--gold),var(--gold-deep));border-radius:999px;
+  padding:4px 11px;white-space:nowrap}
+
+.dialogue{margin-top:8px}
+.dhead{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;
+  background:transparent;border:1px dashed rgba(35,168,154,.3);border-radius:8px;
+  padding:12px 16px;color:inherit;font:inherit;cursor:pointer}
+.dhead:hover{background:rgba(35,168,154,.05);border-color:rgba(35,168,154,.5)}
+.dhead:focus-visible{outline:2px solid var(--peacock);outline-offset:2px}
+.dhead .caret{font:15px var(--mono);color:var(--peacock);width:12px}
+.dhead .sa{font-family:var(--deva);font-size:15px;color:var(--peacock)}
+.dhead .sep{color:var(--line)}
+.dhead .say{color:var(--faint);font-size:12.5px}
+.note{color:var(--faint);font-size:13px;max-width:74ch}
+
+.card{position:relative;background:linear-gradient(160deg,#1d1509 0%,#120d07 74%);
+  border:1px solid var(--line);border-radius:10px;padding:22px 26px 24px;margin-bottom:18px;
+  overflow:hidden;box-shadow:0 22px 44px -30px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.035)}
+.card::before{content:"";position:absolute;inset:0 auto 0 0;width:2px;
+  background:linear-gradient(180deg,transparent,var(--gold) 18%,var(--peacock) 82%,transparent);opacity:.75}
+.card.muted{background:linear-gradient(160deg,var(--panel) 0%,var(--bg-2) 74%);padding:18px 22px 20px}
+.card.muted::before{background:linear-gradient(180deg,transparent,var(--peacock-deep) 30%,transparent);opacity:.5}
+.chead{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.cite{display:inline-flex;align-items:center;gap:8px;font:11px var(--mono);
+  letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.card.muted .cite{color:var(--peacock)}
+.who{font:italic 11px var(--serif);color:var(--faint);text-transform:none;letter-spacing:0}
+.score{font:11px var(--mono);color:var(--faint);white-space:nowrap}
+.score em{color:var(--peacock);font-style:normal;margin-left:6px}
+.deva{font-family:var(--deva);font-size:21px;line-height:2.05;color:var(--gold);
+  margin:18px 0 0;white-space:pre-line;text-shadow:0 0 34px rgba(233,184,80,.14)}
+.card.muted .deva{font-size:17px;line-height:1.95;color:var(--dim);text-shadow:none}
+.iast{font:12.5px/1.9 var(--mono);color:var(--faint);margin:10px 0 0;white-space:pre-line}
+.rule{height:1px;border:0;margin:20px 0 4px;
+  background:linear-gradient(90deg,transparent,var(--line) 18%,var(--line) 82%,transparent)}
+.rend{margin-top:16px}
+.rend .whom{font:10px var(--mono);color:var(--peacock);text-transform:uppercase;letter-spacing:.16em}
+.rend p{margin:7px 0 0;line-height:1.75;font-family:var(--serif);font-size:15.5px}
+.card.muted .rend p{font-size:14.5px;color:var(--dim)}
+
+.meta{margin-top:26px;font:11px var(--mono);color:var(--faint)}
+footer{margin-top:46px;padding-top:20px;border-top:1px solid var(--line);
+  color:var(--faint);font-size:13px;text-align:center}
+footer a{color:var(--gold)}
+footer p{max-width:64ch;margin:8px auto}
+.shanti{font-family:var(--deva);font-size:15px;color:var(--gold);opacity:.55;letter-spacing:.08em}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<div id="shree" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <div class="banner">
+    <p>
+      <b>Recorded demo.</b> These are real responses from the retrieval pipeline, captured by
+      running each question against all 700 verses and saving the result. This page is a single
+      static file — no backend, no API keys, no network calls. Only public-domain text is shown:
+      the Sanskrit, and Shri Purohit Swami's English translation.
+      <a href="https://github.com/mamta-epili/gita-guidance">Source on GitHub &rarr;</a>
+    </p>
+  </div>
+
+  <section class="invocation">
+    <p class="deva">
+      <span>कृष्णाय वासुदेवाय हरये परमात्मने ।</span>
+      <span>प्रणतक्लेशनाशाय गोविन्दाय नमो नमः ॥</span>
+    </p>
+    <p class="iast">
+      <span>kṛṣṇāya vāsudevāya haraye paramātmane |</span>
+      <span>praṇata-kleśanāśāya govindāya namo namaḥ ||</span>
+    </p>
+  </section>
+
+  <svg class="flute" viewBox="0 0 420 26" width="100%" height="26" fill="none" aria-hidden="true">
+    <path d="M0 13 H128" stroke="#3a2a17"></path>
+    <path d="M292 13 H420" stroke="#3a2a17"></path>
+    <rect x="132" y="9.5" width="156" height="7" rx="3.5" fill="#b8862f"></rect>
+    <circle cx="290" cy="13" r="3.4" fill="none" stroke="#e9b850" stroke-opacity=".6"></circle>
+  </svg>
+
+  <header>
+    <h1><span class="om">ॐ</span>Gita guidance</h1>
+    <p class="tagline">पार्थाय प्रतिबोधिताम् — spoken to Arjuna, for anyone</p>
+    <p class="sub">Describe a situation or a feeling — the shlokas that speak to it, quoted with chapter and verse.</p>
+  </header>
+
+  <div class="panel">
+    <p class="qlabel">Pick a question</p>
+    <div class="qs" id="qs"></div>
+  </div>
+
+  <div id="out"></div>
+
+  <footer>
+    <p>
+      Retrieval only. Every shloka, translation and citation is verbatim from the corpus —
+      nothing on this path writes text, so nothing on it can invent scripture.
+    </p>
+    <p><a href="https://github.com/mamta-epili/gita-guidance">github.com/mamta-epili/gita-guidance</a></p>
+    <p class="shanti">ॐ शान्तिः शान्तिः शान्तिः</p>
+  </footer>
+</div>
+
+<script>
+const DATA = {
+ "generated": "2026-09-01",
+ "model": "BAAI/bge-m3",
+ "verses_indexed": 700,
+ "answers": [
+  {
+   "question": "I am stressed. Guide me.",
+   "chip_sa": "चिन्ता",
+   "chip_en": "stressed",
+   "teaching": [
+    {
+     "id": "18:58",
+     "chapter": 18,
+     "verse": 58,
+     "citation": "Bhagavad Gita 18.58",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "मच्चित्तः सर्वदुर्गाणि मत्प्रसादात्तरिष्यसि |\nअथ चेत्त्वमहंकारान्न श्रोष्यसि विनङ्क्ष्यसि ||१८-५८||",
+     "iast": "maccittaḥ sarvadurgāṇi matprasādāttariṣyasi .\natha cettvamahaṃkārānna śroṣyasi vinaṅkṣyasi ||18-58||",
+     "english": {
+      "text": "Fix but thy mind on Me, and by My grace thou shalt overcome the obstacles in thy path. But if, misled by pride, thou wilt not listen, then indeed thou shalt be lost.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5664,
+     "matched_lang": "en"
+    },
+    {
+     "id": "12:9",
+     "chapter": 12,
+     "verse": 9,
+     "citation": "Bhagavad Gita 12.9",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "अथ चित्तं समाधातुं न शक्नोषि मयि स्थिरम् |\nअभ्यासयोगेन ततो मामिच्छाप्तुं धनञ्जय ||१२-९||",
+     "iast": "atha cittaṃ samādhātuṃ na śaknoṣi mayi sthiram .\nabhyāsayogena tato māmicchāptuṃ dhanañjaya ||12-9||",
+     "english": {
+      "text": "But if thou canst not fix thy mind firmly on Me, then, My beloved friend, try to do so by constant practice.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5605,
+     "matched_lang": "hi"
+    },
+    {
+     "id": "18:57",
+     "chapter": 18,
+     "verse": 57,
+     "citation": "Bhagavad Gita 18.57",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "चेतसा सर्वकर्माणि मयि संन्यस्य मत्परः |\nबुद्धियोगमुपाश्रित्य मच्चित्तः सततं भव ||१८-५७||",
+     "iast": "cetasā sarvakarmāṇi mayi saṃnyasya matparaḥ .\nbuddhiyogamupāśritya maccittaḥ satataṃ bhava ||18-57||",
+     "english": {
+      "text": "Surrender then thy actions unto Me, live in Me, concentrate thine intellect on Me, and think always of Me.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5594,
+     "matched_lang": "en"
+    },
+    {
+     "id": "2:61",
+     "chapter": 2,
+     "verse": 61,
+     "citation": "Bhagavad Gita 2.61",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "तानि सर्वाणि संयम्य युक्त आसीत मत्परः |\nवशे हि यस्येन्द्रियाणि तस्य प्रज्ञा प्रतिष्ठिता ||२-६१||",
+     "iast": "tāni sarvāṇi saṃyamya yukta āsīta matparaḥ .\nvaśe hi yasyendriyāṇi tasya prajñā pratiṣṭhitā ||2-61||",
+     "english": {
+      "text": "Restraining them all, let him meditate steadfastly on Me; for who thus conquers his senses achieves perfection.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5569,
+     "matched_lang": "en"
+    }
+   ],
+   "dialogue": [
+    {
+     "id": "2:7",
+     "chapter": 2,
+     "verse": 7,
+     "citation": "Bhagavad Gita 2.7",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "कार्पण्यदोषोपहतस्वभावः\nपृच्छामि त्वां धर्मसम्मूढचेताः |\nयच्छ्रेयः स्यान्निश्चितं ब्रूहि तन्मे\nशिष्यस्तेऽहं शाधि मां त्वां प्रपन्नम् ||२-७||",
+     "iast": "kārpaṇyadoṣopahatasvabhāvaḥ pṛcchāmi tvāṃ dharmasammūḍhacetāḥ .\nyacchreyaḥ syānniścitaṃ brūhi tanme śiṣyaste.ahaṃ śādhi māṃ tvāṃ prapannam ||2-7||",
+     "english": {
+      "text": "My heart is oppressed with pity; and my mind confused as to what my duty is. Therefore, my Lord, tell me what is best for my spiritual welfare, for I am Thy disciple. Please direct me, I pray.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.6167,
+     "matched_lang": "en"
+    },
+    {
+     "id": "3:2",
+     "chapter": 3,
+     "verse": 2,
+     "citation": "Bhagavad Gita 3.2",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "व्यामिश्रेणेव वाक्येन बुद्धिं मोहयसीव मे |\nतदेकं वद निश्चित्य येन श्रेयोऽहमाप्नुयाम् ||३-२||",
+     "iast": "vyāmiśreṇeva vākyena buddhiṃ mohayasīva me .\ntadekaṃ vada niścitya yena śreyo.ahamāpnuyām ||3-2||",
+     "english": {
+      "text": "Thy language perplexes me and confuses my reason. Therefore please tell me the only way by which I may, without doubt, secure my spiritual welfare.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.6044,
+     "matched_lang": "en"
+    }
+   ],
+   "pool_size": 16
+  },
+  {
+   "question": "I am afraid of what is coming.",
+   "chip_sa": "भय",
+   "chip_en": "afraid",
+   "teaching": [
+    {
+     "id": "16:21",
+     "chapter": 16,
+     "verse": 21,
+     "citation": "Bhagavad Gita 16.21",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "त्रिविधं नरकस्येदं द्वारं नाशनमात्मनः |\nकामः क्रोधस्तथा लोभस्तस्मादेतत्त्रयं त्यजेत् ||१६-२१||",
+     "iast": "trividhaṃ narakasyedaṃ dvāraṃ nāśanamātmanaḥ .\nkāmaḥ krodhastathā lobhastasmādetattrayaṃ tyajet ||16-21||",
+     "english": {
+      "text": "The gates of hell are three: lust, wrath and avarice. They destroy the Self. Avoid them.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5678,
+     "matched_lang": "en"
+    },
+    {
+     "id": "11:49",
+     "chapter": 11,
+     "verse": 49,
+     "citation": "Bhagavad Gita 11.49",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "मा ते व्यथा मा च विमूढभावो\nदृष्ट्वा रूपं घोरमीदृङ्ममेदम् |\nव्यपेतभीः प्रीतमनाः पुनस्त्वं\nतदेव मे रूपमिदं प्रपश्य ||११-४९||",
+     "iast": "mā te vyathā mā ca vimūḍhabhāvo dṛṣṭvā rūpaṃ ghoramīdṛṅmamedam .\nvyapetabhīḥ prītamanāḥ punastvaṃ tadeva me rūpamidaṃ prapaśya ||11-49||",
+     "english": {
+      "text": "Be not afraid or bewildered by the terrible vision. Put away thy fear and, with joyful mind, see Me once again in My usual Form.\"",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5572,
+     "matched_lang": "en"
+    },
+    {
+     "id": "7:25",
+     "chapter": 7,
+     "verse": 25,
+     "citation": "Bhagavad Gita 7.25",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "नाहं प्रकाशः सर्वस्य योगमायासमावृतः |\nमूढोऽयं नाभिजानाति लोको मामजमव्ययम् ||७-२५||",
+     "iast": "nāhaṃ prakāśaḥ sarvasya yogamāyāsamāvṛtaḥ .\nmūḍho.ayaṃ nābhijānāti loko māmajamavyayam ||7-25||",
+     "english": {
+      "text": "I am not visible to all, for I am enveloped by the illusion of Phenomenon. This deluded world does not know Me as the Unborn and the Imperishable.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5563,
+     "matched_lang": "en"
+    },
+    {
+     "id": "3:37",
+     "chapter": 3,
+     "verse": 37,
+     "citation": "Bhagavad Gita 3.37",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "श्रीभगवानुवाच |\nकाम एष क्रोध एष रजोगुणसमुद्भवः |\nमहाशनो महापाप्मा विद्ध्येनमिह वैरिणम् ||३-३७||",
+     "iast": "śrībhagavānuvāca .\nkāma eṣa krodha eṣa rajoguṇasamudbhavaḥ .\nmahāśano mahāpāpmā viddhyenamiha vairiṇam ||3-37||",
+     "english": {
+      "text": "Lord Shri Krishna: It is desire, it is aversion, born of passion. Desire consumes and corrupts everything. It is man's greatest enemy.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5551,
+     "matched_lang": "en"
+    }
+   ],
+   "dialogue": [
+    {
+     "id": "11:45",
+     "chapter": 11,
+     "verse": 45,
+     "citation": "Bhagavad Gita 11.45",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "अदृष्टपूर्वं हृषितोऽस्मि दृष्ट्वा\nभयेन च प्रव्यथितं मनो मे |\nतदेव मे दर्शय देव रूपं\nप्रसीद देवेश जगन्निवास ||११-४५||",
+     "iast": "adṛṣṭapūrvaṃ hṛṣito.asmi dṛṣṭvā bhayena ca pravyathitaṃ mano me .\ntadeva me darśaya deva rūpaṃ prasīda deveśa jagannivāsa ||11-45||",
+     "english": {
+      "text": "I rejoice that I have seen what never man saw before; yet, O Lord! I am overwhelmed with fear. Please take again the Form I know. Be merciful, O Lord! thou Who are the Home of the whole universe.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.6145,
+     "matched_lang": "en"
+    },
+    {
+     "id": "1:30",
+     "chapter": 1,
+     "verse": 30,
+     "citation": "Bhagavad Gita 1.30",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "गाण्डीवं स्रंसते हस्तात्त्वक्चैव परिदह्यते |\nन च शक्नोम्यवस्थातुं भ्रमतीव च मे मनः ||१-३०||",
+     "iast": "gāṇḍīvaṃ sraṃsate hastāttvakcaiva paridahyate .\nna ca śaknomyavasthātuṃ bhramatīva ca me manaḥ ||1-30||",
+     "english": {
+      "text": "The bow Gandeeva slips from my hand, and my skin burns. I cannot keep quiet, for my mind is in tumult.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.6059,
+     "matched_lang": "en"
+    }
+   ],
+   "pool_size": 16
+  },
+  {
+   "question": "I am angry and I cannot let it go.",
+   "chip_sa": "क्रोध",
+   "chip_en": "angry",
+   "teaching": [
+    {
+     "id": "16:18",
+     "chapter": 16,
+     "verse": 18,
+     "citation": "Bhagavad Gita 16.18",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "अहंकारं बलं दर्पं कामं क्रोधं च संश्रिताः |\nमामात्मपरदेहेषु प्रद्विषन्तोऽभ्यसूयकाः ||१६-१८||",
+     "iast": "ahaṃkāraṃ balaṃ darpaṃ kāmaṃ krodhaṃ ca saṃśritāḥ .\nmāmātmaparadeheṣu pradviṣanto.abhyasūyakāḥ ||16-18||",
+     "english": {
+      "text": "Puffed up by power and inordinate conceit, swayed by lust and wrath, these wicked people hate Me Who am within them, as I am within all.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.584,
+     "matched_lang": "en"
+    },
+    {
+     "id": "2:44",
+     "chapter": 2,
+     "verse": 44,
+     "citation": "Bhagavad Gita 2.44",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "भोगैश्वर्यप्रसक्तानां तयापहृतचेतसाम् |\nव्यवसायात्मिका बुद्धिः समाधौ न विधीयते ||२-४४||",
+     "iast": "bhogaiśvaryaprasaktānāṃ tayāpahṛtacetasām .\nvyavasāyātmikā buddhiḥ samādhau na vidhīyate ||2-44||",
+     "english": {
+      "text": "While their minds are absorbed with ideas of power and personal enjoyment, they cannot concentrate their discrimination on one point.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5734,
+     "matched_lang": "en"
+    },
+    {
+     "id": "9:19",
+     "chapter": 9,
+     "verse": 19,
+     "citation": "Bhagavad Gita 9.19",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "तपाम्यहमहं वर्षं निगृह्णाम्युत्सृजामि च |\nअमृतं चैव मृत्युश्च सदसच्चाहमर्जुन ||९-१९||",
+     "iast": "tapāmyahamahaṃ varṣaṃ nigṛhṇāmyutsṛjāmi ca .\namṛtaṃ caiva mṛtyuśca sadasaccāhamarjuna ||9-19||",
+     "english": {
+      "text": "I am the Heat of the Sun, I release and hold back the Rains. I am Death and Immortality; I am Being and Not-Being.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5704,
+     "matched_lang": "en"
+    },
+    {
+     "id": "2:63",
+     "chapter": 2,
+     "verse": 63,
+     "citation": "Bhagavad Gita 2.63",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "क्रोधाद्भवति सम्मोहः सम्मोहात्स्मृतिविभ्रमः |\nस्मृतिभ्रंशाद् बुद्धिनाशो बुद्धिनाशात्प्रणश्यति ||२-६३||",
+     "iast": "krodhādbhavati sammohaḥ sammohātsmṛtivibhramaḥ .\nsmṛtibhraṃśād buddhināśo buddhināśātpraṇaśyati ||2-63||",
+     "english": {
+      "text": "Anger induces delusion; delusion, loss of memory; through loss of memory, reason is shattered; and loss of reason leads to destruction.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.568,
+     "matched_lang": "en"
+    }
+   ],
+   "dialogue": [
+    {
+     "id": "1:30",
+     "chapter": 1,
+     "verse": 30,
+     "citation": "Bhagavad Gita 1.30",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "गाण्डीवं स्रंसते हस्तात्त्वक्चैव परिदह्यते |\nन च शक्नोम्यवस्थातुं भ्रमतीव च मे मनः ||१-३०||",
+     "iast": "gāṇḍīvaṃ sraṃsate hastāttvakcaiva paridahyate .\nna ca śaknomyavasthātuṃ bhramatīva ca me manaḥ ||1-30||",
+     "english": {
+      "text": "The bow Gandeeva slips from my hand, and my skin burns. I cannot keep quiet, for my mind is in tumult.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.635,
+     "matched_lang": "en"
+    },
+    {
+     "id": "1:29",
+     "chapter": 1,
+     "verse": 29,
+     "citation": "Bhagavad Gita 1.29",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "सीदन्ति मम गात्राणि मुखं च परिशुष्यति |\nवेपथुश्च शरीरे मे रोमहर्षश्च जायते ||१-२९||",
+     "iast": "sīdanti mama gātrāṇi mukhaṃ ca pariśuṣyati .\nvepathuśca śarīre me romaharṣaśca jāyate ||1-29||",
+     "english": {
+      "text": "My limbs fail me and my throat is parched, my body trembles and my hair stands on end.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5878,
+     "matched_lang": "en"
+    }
+   ],
+   "pool_size": 16
+  },
+  {
+   "question": "Someone I love has died. How do I bear it?",
+   "chip_sa": "शोक",
+   "chip_en": "grieving",
+   "teaching": [
+    {
+     "id": "8:5",
+     "chapter": 8,
+     "verse": 5,
+     "citation": "Bhagavad Gita 8.5",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "अन्तकाले च मामेव स्मरन्मुक्त्वा कलेवरम् |\nयः प्रयाति स मद्भावं याति नास्त्यत्र संशयः ||८-५||",
+     "iast": "antakāle ca māmeva smaranmuktvā kalevaram .\nyaḥ prayāti sa madbhāvaṃ yāti nāstyatra saṃśayaḥ ||8-5||",
+     "english": {
+      "text": "Whosoever at the time of death thinks only of Me, and thinking thus leaves the body and goes forth, assuredly he will know Me.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.543,
+     "matched_lang": "en"
+    },
+    {
+     "id": "2:14",
+     "chapter": 2,
+     "verse": 14,
+     "citation": "Bhagavad Gita 2.14",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "मात्रास्पर्शास्तु कौन्तेय शीतोष्णसुखदुःखदाः |\nआगमापायिनोऽनित्यास्तांस्तितिक्षस्व भारत ||२-१४||",
+     "iast": "mātrāsparśāstu kaunteya śītoṣṇasukhaduḥkhadāḥ .\nāgamāpāyino.anityāstāṃstitikṣasva bhārata ||2-14||",
+     "english": {
+      "text": "Those external relations which bring cold and heat, pain and happiness, they come and go; they are not permanent. Endure them bravely, O Prince!",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.526,
+     "matched_lang": "en"
+    },
+    {
+     "id": "11:55",
+     "chapter": 11,
+     "verse": 55,
+     "citation": "Bhagavad Gita 11.55",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "मत्कर्मकृन्मत्परमो मद्भक्तः सङ्गवर्जितः |\nनिर्वैरः सर्वभूतेषु यः स मामेति पाण्डव ||११-५५||",
+     "iast": "matkarmakṛnmatparamo madbhaktaḥ saṅgavarjitaḥ .\nnirvairaḥ sarvabhūteṣu yaḥ sa māmeti pāṇḍava ||11-55||",
+     "english": {
+      "text": "He whose every action is done for My sake, to whom I am the final goal, who loves Me only and hates no one - O My dearest son, only he can realize Me!\"",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.517,
+     "matched_lang": "en"
+    },
+    {
+     "id": "2:27",
+     "chapter": 2,
+     "verse": 27,
+     "citation": "Bhagavad Gita 2.27",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "जातस्य हि ध्रुवो मृत्युर्ध्रुवं जन्म मृतस्य च |\nतस्मादपरिहार्येऽर्थे न त्वं शोचितुमर्हसि ||२-२७||",
+     "iast": "jātasya hi dhruvo mṛtyurdhruvaṃ janma mṛtasya ca .\ntasmādaparihārye.arthe na tvaṃ śocitumarhasi ||2-27||",
+     "english": {
+      "text": "For death is as sure for that which is born, as birth is for that which is dead. Therefore grieve not for what is inevitable.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5155,
+     "matched_lang": "en"
+    }
+   ],
+   "dialogue": [
+    {
+     "id": "11:44",
+     "chapter": 11,
+     "verse": 44,
+     "citation": "Bhagavad Gita 11.44",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "तस्मात्प्रणम्य प्रणिधाय कायं\nप्रसादये त्वामहमीशमीड्यम् |\nपितेव पुत्रस्य सखेव सख्युः\nप्रियः प्रियायार्हसि देव सोढुम् ||११-४४||",
+     "iast": "tasmātpraṇamya praṇidhāya kāyaṃ prasādaye tvāmahamīśamīḍyam .\npiteva putrasya sakheva sakhyuḥ priyaḥ priyāyārhasi deva soḍhum ||11-44||",
+     "english": {
+      "text": "Therefore I prostrate myself before Thee, O Lord! Most Adorable! I salute Thee, I ask Thy blessing. Only Thou canst be trusted to bear with me, as father to son, as friend to friend, as lover to his beloved.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.534,
+     "matched_lang": "hi"
+    },
+    {
+     "id": "11:40",
+     "chapter": 11,
+     "verse": 40,
+     "citation": "Bhagavad Gita 11.40",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "नमः पुरस्तादथ पृष्ठतस्ते\nनमोऽस्तु ते सर्वत एव सर्व |\nअनन्तवीर्यामितविक्रमस्त्वं\nसर्वं समाप्नोषि ततोऽसि सर्वः ||११-४०||",
+     "iast": "namaḥ purastādatha pṛṣṭhataste namo.astu te sarvata eva sarva .\nanantavīryāmitavikramastvaṃ sarvaṃ samāpnoṣi tato.asi sarvaḥ ||11-40||",
+     "english": {
+      "text": "Salutations to Thee in front and on every side, Thou who encompasseth me round about. Thy power is infinite; Thy majesty immeasurable; thou upholdest all things; yea,Thou Thyself art All.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5083,
+     "matched_lang": "en"
+    }
+   ],
+   "pool_size": 16
+  },
+  {
+   "question": "I am in a situation where I know something wrong is happening but I cannot say it. What should I do?",
+   "chip_sa": "",
+   "chip_en": "a wrong I can't name",
+   "teaching": [
+    {
+     "id": "18:31",
+     "chapter": 18,
+     "verse": 31,
+     "citation": "Bhagavad Gita 18.31",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "यया धर्ममधर्मं च कार्यं चाकार्यमेव च |\nअयथावत्प्रजानाति बुद्धिः सा पार्थ राजसी ||१८-३१||",
+     "iast": "yayā dharmamadharmaṃ ca kāryaṃ cākāryameva ca .\nayathāvatprajānāti buddhiḥ sā pārtha rājasī ||18-31||",
+     "english": {
+      "text": "The intellect which does not understand what is right and what is wrong, and what should be done and what not, is under the sway of Passion.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5742,
+     "matched_lang": "en"
+    },
+    {
+     "id": "17:6",
+     "chapter": 17,
+     "verse": 6,
+     "citation": "Bhagavad Gita 17.6",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "कर्षयन्तः शरीरस्थं भूतग्राममचेतसः |\nमां चैवान्तःशरीरस्थं तान्विद्ध्यासुरनिश्चयान् ||१७-६||",
+     "iast": "karṣayantaḥ śarīrasthaṃ bhūtagrāmamacetasaḥ .\nmāṃ caivāntaḥśarīrasthaṃ tānviddhyāsuraniścayān ||17-6||",
+     "english": {
+      "text": "They are ignorant. They torment the organs of the body; and they harass Me also, Who lives within. Know that they are devoted to evil.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5655,
+     "matched_lang": "en"
+    },
+    {
+     "id": "9:5",
+     "chapter": 9,
+     "verse": 5,
+     "citation": "Bhagavad Gita 9.5",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "न च मत्स्थानि भूतानि पश्य मे योगमैश्वरम् |\nभूतभृन्न च भूतस्थो ममात्मा भूतभावनः ||९-५||",
+     "iast": "na ca matsthāni bhūtāni paśya me yogamaiśvaram .\nbhūtabhṛnna ca bhūtastho mamātmā bhūtabhāvanaḥ ||9-5||",
+     "english": {
+      "text": "Nevertheless, they do not consciously abide in Me. Such is My Divine Sovereignty that though I, the Supreme Self, am the cause and upholder of all, yet I remain outside.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.565,
+     "matched_lang": "en"
+    },
+    {
+     "id": "2:36",
+     "chapter": 2,
+     "verse": 36,
+     "citation": "Bhagavad Gita 2.36",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "अवाच्यवादांश्च बहून्वदिष्यन्ति तवाहिताः |\nनिन्दन्तस्तव सामर्थ्यं ततो दुःखतरं नु किम् ||२-३६||",
+     "iast": "avācyavādāṃśca bahūnvadiṣyanti tavāhitāḥ .\nnindantastava sāmarthyaṃ tato duḥkhataraṃ nu kim ||2-36||",
+     "english": {
+      "text": "Thine enemies will spread scandal and mock at thy courage. Can anything be more humiliating?",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5593,
+     "matched_lang": "hi"
+    }
+   ],
+   "dialogue": [
+    {
+     "id": "3:2",
+     "chapter": 3,
+     "verse": 2,
+     "citation": "Bhagavad Gita 3.2",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "व्यामिश्रेणेव वाक्येन बुद्धिं मोहयसीव मे |\nतदेकं वद निश्चित्य येन श्रेयोऽहमाप्नुयाम् ||३-२||",
+     "iast": "vyāmiśreṇeva vākyena buddhiṃ mohayasīva me .\ntadekaṃ vada niścitya yena śreyo.ahamāpnuyām ||3-2||",
+     "english": {
+      "text": "Thy language perplexes me and confuses my reason. Therefore please tell me the only way by which I may, without doubt, secure my spiritual welfare.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5905,
+     "matched_lang": "en"
+    },
+    {
+     "id": "1:30",
+     "chapter": 1,
+     "verse": 30,
+     "citation": "Bhagavad Gita 1.30",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "गाण्डीवं स्रंसते हस्तात्त्वक्चैव परिदह्यते |\nन च शक्नोम्यवस्थातुं भ्रमतीव च मे मनः ||१-३०||",
+     "iast": "gāṇḍīvaṃ sraṃsate hastāttvakcaiva paridahyate .\nna ca śaknomyavasthātuṃ bhramatīva ca me manaḥ ||1-30||",
+     "english": {
+      "text": "The bow Gandeeva slips from my hand, and my skin burns. I cannot keep quiet, for my mind is in tumult.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5841,
+     "matched_lang": "en"
+    }
+   ],
+   "pool_size": 16
+  },
+  {
+   "question": "How can I do my work well if I am not allowed to care about the result?",
+   "chip_sa": "कर्म",
+   "chip_en": "work without attachment",
+   "teaching": [
+    {
+     "id": "3:19",
+     "chapter": 3,
+     "verse": 19,
+     "citation": "Bhagavad Gita 3.19",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "तस्मादसक्तः सततं कार्यं कर्म समाचर |\nअसक्तो ह्याचरन्कर्म परमाप्नोति पूरुषः ||३-१९||",
+     "iast": "tasmādasaktaḥ satataṃ kāryaṃ karma samācara .\nasakto hyācarankarma paramāpnoti pūruṣaḥ ||3-19||",
+     "english": {
+      "text": "Therefore do thy duty perfectly, without care for the results, for he who does his duty disinterestedly attains the Supreme.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.6078,
+     "matched_lang": "en"
+    },
+    {
+     "id": "4:22",
+     "chapter": 4,
+     "verse": 22,
+     "citation": "Bhagavad Gita 4.22",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "यदृच्छालाभसन्तुष्टो द्वन्द्वातीतो विमत्सरः |\nसमः सिद्धावसिद्धौ च कृत्वापि न निबध्यते ||४-२२||",
+     "iast": "yadṛcchālābhasantuṣṭo dvandvātīto vimatsaraḥ .\nsamaḥ siddhāvasiddhau ca kṛtvāpi na nibadhyate ||4-22||",
+     "english": {
+      "text": "Content with what comes to him without effort of his own, mounting above the pairs of opposites, free from envy, his mind balanced both in success and failure; though he acts, yet the consequences do not bind him.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5727,
+     "matched_lang": "hi"
+    },
+    {
+     "id": "2:47",
+     "chapter": 2,
+     "verse": 47,
+     "citation": "Bhagavad Gita 2.47",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन |\nमा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि ||२-४७||",
+     "iast": "karmaṇyevādhikāraste mā phaleṣu kadācana .\nmā karmaphalaheturbhūrmā te saṅgo.astvakarmaṇi ||2-47||",
+     "english": {
+      "text": "But thou hast only the right to work, but none to the fruit thereof. Let not then the fruit of thy action be thy motive; nor yet be thou enamored of inaction.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5703,
+     "matched_lang": "en"
+    },
+    {
+     "id": "18:6",
+     "chapter": 18,
+     "verse": 6,
+     "citation": "Bhagavad Gita 18.6",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "एतान्यपि तु कर्माणि सङ्गं त्यक्त्वा फलानि च |\nकर्तव्यानीति मे पार्थ निश्चितं मतमुत्तमम् ||१८-६||",
+     "iast": "etānyapi tu karmāṇi saṅgaṃ tyaktvā phalāni ca .\nkartavyānīti me pārtha niścitaṃ matamuttamam ||18-6||",
+     "english": {
+      "text": "But they should be done with detachment and without thought of recompense. This is my final judgment.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5646,
+     "matched_lang": "en"
+    }
+   ],
+   "dialogue": [],
+   "pool_size": 16
+  },
+  {
+   "question": "What is the chain that starts with wanting something and ends badly?",
+   "chip_sa": "मोह",
+   "chip_en": "desire to ruin",
+   "teaching": [
+    {
+     "id": "16:11",
+     "chapter": 16,
+     "verse": 11,
+     "citation": "Bhagavad Gita 16.11",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "चिन्तामपरिमेयां च प्रलयान्तामुपाश्रिताः |\nकामोपभोगपरमा एतावदिति निश्चिताः ||१६-११||",
+     "iast": "cintāmaparimeyāṃ ca pralayāntāmupāśritāḥ .\nkāmopabhogaparamā etāvaditi niścitāḥ ||16-11||",
+     "english": {
+      "text": "Poring anxiously over evil resolutions, which only end in death; seeking only the gratification of desire as the highest goal; seeing nothing beyond;",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5515,
+     "matched_lang": "en"
+    },
+    {
+     "id": "3:37",
+     "chapter": 3,
+     "verse": 37,
+     "citation": "Bhagavad Gita 3.37",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "श्रीभगवानुवाच |\nकाम एष क्रोध एष रजोगुणसमुद्भवः |\nमहाशनो महापाप्मा विद्ध्येनमिह वैरिणम् ||३-३७||",
+     "iast": "śrībhagavānuvāca .\nkāma eṣa krodha eṣa rajoguṇasamudbhavaḥ .\nmahāśano mahāpāpmā viddhyenamiha vairiṇam ||3-37||",
+     "english": {
+      "text": "Lord Shri Krishna: It is desire, it is aversion, born of passion. Desire consumes and corrupts everything. It is man's greatest enemy.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5411,
+     "matched_lang": "en"
+    },
+    {
+     "id": "18:22",
+     "chapter": 18,
+     "verse": 22,
+     "citation": "Bhagavad Gita 18.22",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "यत्तु कृत्स्नवदेकस्मिन्कार्ये सक्तमहैतुकम् |\nअतत्त्वार्थवदल्पं च तत्तामसमुदाहृतम् ||१८-२२||",
+     "iast": "yattu kṛtsnavadekasminkārye saktamahaitukam .\natattvārthavadalpaṃ ca tattāmasamudāhṛtam ||18-22||",
+     "english": {
+      "text": "But that which clings blindly to one idea as if it were all, without logic, truth or insight, that has its origin in Darkness.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5139,
+     "matched_lang": "en"
+    },
+    {
+     "id": "2:62",
+     "chapter": 2,
+     "verse": 62,
+     "citation": "Bhagavad Gita 2.62",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "ध्यायतो विषयान्पुंसः सङ्गस्तेषूपजायते |\nसङ्गात्सञ्जायते कामः कामात्क्रोधोऽभिजायते ||२-६२||",
+     "iast": "dhyāyato viṣayānpuṃsaḥ saṅgasteṣūpajāyate .\nsaṅgātsañjāyate kāmaḥ kāmātkrodho.abhijāyate ||2-62||",
+     "english": {
+      "text": "When a man dwells on the objects of sense, he creates an attraction for them; attraction develops into desire, and desire breeds anger.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5096,
+     "matched_lang": "en"
+    }
+   ],
+   "dialogue": [
+    {
+     "id": "3:36",
+     "chapter": 3,
+     "verse": 36,
+     "citation": "Bhagavad Gita 3.36",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "अर्जुन उवाच |\nअथ केन प्रयुक्तोऽयं पापं चरति पूरुषः |\nअनिच्छन्नपि वार्ष्णेय बलादिव नियोजितः ||३-३६||",
+     "iast": "arjuna uvāca .\natha kena prayukto.ayaṃ pāpaṃ carati pūruṣaḥ .\nanicchannapi vārṣṇeya balādiva niyojitaḥ ||3-36||",
+     "english": {
+      "text": "Arjuna asked: My Lord! Tell me, what is it that drives a man to sin, even against his will and as if by compulsion?",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.4877,
+     "matched_lang": "hi"
+    }
+   ],
+   "pool_size": 16
+  },
+  {
+   "question": "Is it better to be mediocre at what suits me than excellent at someone else's role?",
+   "chip_sa": "स्वधर्म",
+   "chip_en": "my own duty",
+   "teaching": [
+    {
+     "id": "3:35",
+     "chapter": 3,
+     "verse": 35,
+     "citation": "Bhagavad Gita 3.35",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "श्रेयान्स्वधर्मो विगुणः परधर्मात्स्वनुष्ठितात् |\nस्वधर्मे निधनं श्रेयः परधर्मो भयावहः ||३-३५||",
+     "iast": "śreyānsvadharmo viguṇaḥ paradharmātsvanuṣṭhitāt .\nsvadharme nidhanaṃ śreyaḥ paradharmo bhayāvahaḥ ||3-35||",
+     "english": {
+      "text": "It is better to do thine own duty, however lacking in merit, than to do that of another, even though efficiently. It is better to die doing one's own duty, for to do the duty of another is fraught with danger.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5861,
+     "matched_lang": "en"
+    },
+    {
+     "id": "18:47",
+     "chapter": 18,
+     "verse": 47,
+     "citation": "Bhagavad Gita 18.47",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "श्रेयान्स्वधर्मो विगुणः परधर्मात्स्वनुष्ठितात् |\nस्वभावनियतं कर्म कुर्वन्नाप्नोति किल्बिषम् ||१८-४७||",
+     "iast": "śreyānsvadharmo viguṇaḥ paradharmātsvanuṣṭhitāt .\nsvabhāvaniyataṃ karma kurvannāpnoti kilbiṣam ||18-47||",
+     "english": {
+      "text": "It is better to do one's own duty, however defective it may be, than to follow the duty of another, however well one may perform it. He who does his duty as his own nature reveals it, never sins.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5342,
+     "matched_lang": "en"
+    },
+    {
+     "id": "7:3",
+     "chapter": 7,
+     "verse": 3,
+     "citation": "Bhagavad Gita 7.3",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "मनुष्याणां सहस्रेषु कश्चिद्यतति सिद्धये |\nयततामपि सिद्धानां कश्चिन्मां वेत्ति तत्त्वतः ||७-३||",
+     "iast": "manuṣyāṇāṃ sahasreṣu kaścidyatati siddhaye .\nyatatāmapi siddhānāṃ kaścinmāṃ vetti tattvataḥ ||7-3||",
+     "english": {
+      "text": "Among thousands of men scarcely one strives for perfection, and even amongst those who gain occult powers, perchance but one knows me in truth.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5168,
+     "matched_lang": "en"
+    },
+    {
+     "id": "2:49",
+     "chapter": 2,
+     "verse": 49,
+     "citation": "Bhagavad Gita 2.49",
+     "speaker": "krishna",
+     "speaker_name": "Shri Krishna",
+     "sanskrit": "दूरेण ह्यवरं कर्म बुद्धियोगाद्धनञ्जय |\nबुद्धौ शरणमन्विच्छ कृपणाः फलहेतवः ||२-४९||",
+     "iast": "dūreṇa hyavaraṃ karma buddhiyogāddhanañjaya .\nbuddhau śaraṇamanviccha kṛpaṇāḥ phalahetavaḥ ||2-49||",
+     "english": {
+      "text": "Physical action is far inferior to an intellect concentrated on the Divine. Have recourse then to Pure Intelligence. It is only the petty-minded who work for reward.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.5108,
+     "matched_lang": "hi"
+    }
+   ],
+   "dialogue": [
+    {
+     "id": "2:5",
+     "chapter": 2,
+     "verse": 5,
+     "citation": "Bhagavad Gita 2.5",
+     "speaker": "arjuna",
+     "speaker_name": "Arjuna",
+     "sanskrit": "गुरूनहत्वा हि महानुभावान्\nश्रेयो भोक्तुं भैक्ष्यमपीह लोके |\nहत्वार्थकामांस्तु गुरूनिहैव\nभुञ्जीय भोगान् रुधिरप्रदिग्धान् ||२-५||",
+     "iast": "gurūnahatvā hi mahānubhāvān śreyo bhoktuṃ bhaikṣyamapīha loke .\nhatvārthakāmāṃstu gurūnihaiva bhuñjīya bhogān rudhirapradigdhān ||2-5||",
+     "english": {
+      "text": "Rather would I content myself with a beggar's crust that kill these teachers of mine, these precious noble souls! To slay these masters who are my benefactors would be to stain the sweetness of life's pleasures with their blood.",
+      "translator": "Shri Purohit Swami",
+      "licence": "public-domain",
+      "redistributable": true
+     },
+     "hindi": null,
+     "score": 0.505,
+     "matched_lang": "en"
+    }
+   ],
+   "pool_size": 16
+  }
+ ]
+};
+
+(function shree() {
+  const f = document.createElement("div");
+  f.className = "field";
+  for (let r = 0; r < 16; r++) {
+    const line = document.createElement("div");
+    line.className = "line" + (r % 2 ? " odd" : "");
+    for (let c = 0; c < 14; c++) {
+      const s = document.createElement("span");
+      s.textContent = "श्री";
+      line.appendChild(s);
+    }
+    f.appendChild(line);
+  }
+  document.getElementById("shree").appendChild(f);
+})();
+
+const esc = (s) => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+function card(v, muted) {
+  const en = v.english
+    ? '<div class="rend"><span class="whom">English &middot; ' + esc(v.english.translator) +
+      "</span><p>" + esc(v.english.text) + "</p></div>"
+    : "";
+  return '<article class="card' + (muted ? " muted" : "") + '">' +
+    '<div class="chead"><span class="cite">' + esc(v.citation) +
+      ' <em class="who">' + esc(v.speaker_name) + "</em></span>" +
+      '<span class="score">' + (v.score != null ? v.score.toFixed(3) : "") +
+      (v.matched_lang ? "<em>" + esc(v.matched_lang) + "</em>" : "") + "</span></div>" +
+    (v.sanskrit ? '<p class="deva">' + esc(v.sanskrit) + "</p>" : "") +
+    (v.iast ? '<p class="iast">' + esc(v.iast) + "</p>" : "") +
+    (en ? '<hr class="rule">' + en : "") +
+    "</article>";
+}
+
+let openDialogue = true;
+let current = 0;
+
+function render(i) {
+  current = i;
+  const r = DATA.answers[i];
+  const btns = document.querySelectorAll(".q");
+  for (let k = 0; k < btns.length; k++) btns[k].classList.toggle("on", k === i);
+
+  const teaching = r.teaching.length
+    ? '<section class="teaching"><div class="thead"><div class="titles">' +
+      '<span class="sa">श्रीभगवानुवाच</span>' +
+      '<span class="say">The Blessed Lord said</span></div>' +
+      '<span class="badge">the answer</span></div>' +
+      r.teaching.map(function (v) { return card(v, false); }).join("") +
+      "</section>"
+    : "";
+
+  const dialogue = r.dialogue.length
+    ? '<section class="dialogue"><button class="dhead" id="dtoggle" aria-expanded="' +
+      openDialogue + '"><span class="caret">' + (openDialogue ? "−" : "+") +
+      '</span><span class="sa">अर्जुन उवाच</span><span class="sep">&middot;</span>' +
+      '<span class="say">the same difficulty, as Arjuna put it (' + r.dialogue.length +
+      ")</span></button>" +
+      (openDialogue
+        ? '<p class="note" style="margin:18px 0">These matched the words most closely — ' +
+          "because Arjuna is describing the same trouble. They are the question, not the " +
+          "teaching.</p>" + r.dialogue.map(function (v) { return card(v, true); }).join("")
+        : "") +
+      "</section>"
+    : "";
+
+  document.getElementById("out").innerHTML =
+    '<p class="asked">' + esc(r.question) + "</p>" + teaching + dialogue +
+    '<p class="meta">' + (r.teaching.length + r.dialogue.length) + " of " + r.pool_size +
+    " retrieved &middot; " + esc(DATA.model) + " &middot; recorded " + esc(DATA.generated) +
+    "</p>";
+
+  const t = document.getElementById("dtoggle");
+  if (t) t.addEventListener("click", function () { openDialogue = !openDialogue; render(current); });
+}
+
+(function init() {
+  document.getElementById("qs").innerHTML = DATA.answers.map(function (a, i) {
+    return '<button class="q" data-i="' + i + '">' +
+      (a.chip_sa ? '<span class="sa">' + esc(a.chip_sa) + "</span>" : "") +
+      '<span class="en">' + esc(a.chip_en || a.question) + "</span></button>";
+  }).join("");
+  const btns = document.querySelectorAll(".q");
+  for (let i = 0; i < btns.length; i++) {
+    btns[i].addEventListener("click", function () {
+      render(parseInt(this.getAttribute("data-i"), 10));
+      document.getElementById("out").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+  render(0);
+})();
+</script>
+</body>
+</html>

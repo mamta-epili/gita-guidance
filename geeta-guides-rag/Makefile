@@ -11,6 +11,7 @@
 #   make build           production Angular build into frontend/dist
 #   make serve           backend only, serving the built Angular bundle
 #   make check           load the checkpoint and report, no server
+#   make demo            rebuild docs/demo.html from real retrieval results
 #   make clean           remove __pycache__ and dist
 
 PY   := $(CURDIR)/.venv/bin/python
@@ -53,6 +54,11 @@ serve: venv-ok
 check: venv-ok
 	$(PY) -c "from app.model import CharGPT; import json; \
 	g = CharGPT(); i = g.info(); i.pop('vocab'); print(json.dumps(i, indent=2))"
+
+# Records real answers into a standalone page. public_only=True, so the Hindi
+# (copyrighted) never reaches it — the script aborts if any leaks through.
+demo: venv-ok
+	$(PY) scripts/build_demo.py
 
 clean:
 	rm -rf app/__pycache__ __pycache__ frontend/dist frontend/.angular

@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gita guidance — interactive demo</title>
+<meta name="description" content="Ask in your own words, get the shlokas that answer. Recorded responses from the real retrieval pipeline. No backend, no API keys.">
+<style>
+:root{
+  --bg:#0f0b07; --bg-2:#150f09; --panel:#1b140c; --panel-2:#241a10;
+  --line:#3a2a17; --line-soft:#2a1e11;
+  --ink:#f3e9d7; --dim:#baa88d; --faint:#7e6c56;
+  --gold:#e9b850; --gold-deep:#b8862f; --saffron:#e8833c;
+  --peacock:#23a89a; --peacock-deep:#0f6f68; --vermillion:#c4472f;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --deva:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari Sangam MN","Nirmala UI",serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;color:var(--ink);background:var(--bg);
+  font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  background-image:
+    radial-gradient(1150px 600px at 50% 116%, rgba(233,184,80,.16), transparent 70%),
+    radial-gradient(900px 500px at 8% -12%, rgba(232,131,60,.10), transparent 66%),
+    radial-gradient(760px 440px at 94% 2%, rgba(35,168,154,.07), transparent 64%);
+  background-attachment:fixed;background-repeat:no-repeat;
+}
+#shree{position:fixed;inset:0;z-index:0;pointer-events:none;user-select:none;overflow:hidden}
+#shree .field{position:absolute;top:-12%;left:-12%;width:124%;height:124%;
+  transform:rotate(-8deg);display:flex;flex-direction:column;justify-content:space-between}
+#shree .line{display:flex;justify-content:space-between;white-space:nowrap}
+#shree .line.odd{padding-left:5.5%}
+#shree span{font-family:var(--deva);font-size:30px;line-height:1;color:rgba(233,184,80,.055)}
+
+.wrap{max-width:1000px;margin:0 auto;padding:40px 22px 90px;position:relative;z-index:1}
+
+.banner{border:1px dashed rgba(35,168,154,.4);border-radius:9px;
+  padding:13px 16px;margin-bottom:30px;background:rgba(35,168,154,.05)}
+.banner b{color:var(--peacock)}
+.banner p{margin:0;font-size:13px;color:var(--dim);line-height:1.55}
+.banner a{color:var(--gold)}
+
+.invocation{text-align:center;margin:6px 0 0}
+.invocation .deva,.invocation .iast{display:flex;flex-wrap:nowrap;justify-content:center;gap:.45em;white-space:nowrap}
+.invocation .deva{font-family:var(--deva);font-size:clamp(13px,2.02vw,21px);line-height:2.05;
+  color:var(--gold);margin:0;text-shadow:0 0 40px rgba(233,184,80,.18)}
+.invocation .iast{font-family:var(--mono);font-size:clamp(9px,1.12vw,11.5px);line-height:1.9;
+  color:var(--peacock);margin:12px 0 0;opacity:.85}
+@media(max-width:620px){
+  .invocation .deva,.invocation .iast{flex-wrap:wrap;gap:0}
+  .invocation .deva span,.invocation .iast span{flex:0 0 100%}
+  .invocation .deva{font-size:17px}.invocation .iast{font-size:10.5px}
+}
+
+.flute{display:block;margin:30px 0}
+
+header{border-bottom:1px solid var(--line-soft);padding-bottom:24px;margin-bottom:28px}
+h1{font-family:var(--serif);font-size:34px;font-weight:500;margin:0 0 8px;letter-spacing:.01em}
+h1 .om{color:var(--gold);margin-right:12px;text-shadow:0 0 26px rgba(233,184,80,.45)}
+.tagline{margin:2px 0 14px;font-family:var(--deva);font-size:13.5px;color:var(--peacock)}
+.sub{color:var(--dim);font-size:15px;font-family:var(--serif);line-height:1.7;margin:0}
+
+.panel{background:linear-gradient(180deg,var(--panel) 0%,var(--bg-2) 100%);
+  border:1px solid var(--line);border-radius:10px;padding:20px;
+  box-shadow:0 18px 40px -28px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.035)}
+
+.qlabel{font:10px var(--mono);letter-spacing:.18em;text-transform:uppercase;
+  color:var(--peacock);margin:0 0 12px}
+.qs{display:flex;flex-wrap:wrap;gap:8px}
+.q{display:inline-flex;align-items:baseline;gap:8px;cursor:pointer;
+  background:rgba(35,168,154,.06);border:1px solid rgba(35,168,154,.28);
+  border-radius:999px;padding:7px 16px;color:inherit;font:inherit;text-align:left}
+.q:hover{background:rgba(233,184,80,.09);border-color:rgba(233,184,80,.42)}
+.q.on{background:rgba(233,184,80,.13);border-color:var(--gold)}
+.q:focus-visible{outline:2px solid var(--peacock);outline-offset:2px}
+.q .sa{font-family:var(--deva);font-size:14px;color:var(--gold)}
+.q .en{font:italic 13px var(--serif);color:var(--peacock)}
+.q.on .en{color:var(--gold)}
+
+.asked{margin:26px 0 0;font-family:var(--serif);font-size:19px;font-style:italic;color:var(--ink)}
+.asked::before{content:"\201C"}.asked::after{content:"\201D"}
+
+.teaching{margin-top:22px;padding:20px 20px 4px;border:1px solid rgba(233,184,80,.3);
+  border-radius:12px;
+  background:radial-gradient(720px 220px at 50% -12%, rgba(233,184,80,.11), transparent 70%),
+    linear-gradient(180deg, rgba(233,184,80,.05), rgba(233,184,80,.012));
+  box-shadow:0 34px 70px -50px rgba(233,184,80,.3)}
+.thead{display:flex;align-items:center;gap:12px;padding-bottom:16px;margin-bottom:18px;
+  border-bottom:1px solid rgba(233,184,80,.22)}
+.thead .titles{display:flex;flex-direction:column;gap:2px;flex:1}
+.thead .sa{font-family:var(--deva);font-size:19px;color:var(--gold)}
+.thead .say{font:italic 13px var(--serif);color:var(--dim)}
+.badge{font:10px var(--mono);text-transform:uppercase;letter-spacing:.16em;color:#241703;
+  background:linear-gradient(180deg,var(--gold),var(--gold-deep));border-radius:999px;
+  padding:4px 11px;white-space:nowrap}
+
+.dialogue{margin-top:8px}
+.dhead{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;
+  background:transparent;border:1px dashed rgba(35,168,154,.3);border-radius:8px;
+  padding:12px 16px;color:inherit;font:inherit;cursor:pointer}
+.dhead:hover{background:rgba(35,168,154,.05);border-color:rgba(35,168,154,.5)}
+.dhead:focus-visible{outline:2px solid var(--peacock);outline-offset:2px}
+.dhead .caret{font:15px var(--mono);color:var(--peacock);width:12px}
+.dhead .sa{font-family:var(--deva);font-size:15px;color:var(--peacock)}
+.dhead .sep{color:var(--line)}
+.dhead .say{color:var(--faint);font-size:12.5px}
+.note{color:var(--faint);font-size:13px;max-width:74ch}
+
+.card{position:relative;background:linear-gradient(160deg,#1d1509 0%,#120d07 74%);
+  border:1px solid var(--line);border-radius:10px;padding:22px 26px 24px;margin-bottom:18px;
+  overflow:hidden;box-shadow:0 22px 44px -30px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.035)}
+.card::before{content:"";position:absolute;inset:0 auto 0 0;width:2px;
+  background:linear-gradient(180deg,transparent,var(--gold) 18%,var(--peacock) 82%,transparent);opacity:.75}
+.card.muted{background:linear-gradient(160deg,var(--panel) 0%,var(--bg-2) 74%);padding:18px 22px 20px}
+.card.muted::before{background:linear-gradient(180deg,transparent,var(--peacock-deep) 30%,transparent);opacity:.5}
+.chead{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.cite{display:inline-flex;align-items:center;gap:8px;font:11px var(--mono);
+  letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.card.muted .cite{color:var(--peacock)}
+.who{font:italic 11px var(--serif);color:var(--faint);text-transform:none;letter-spacing:0}
+.score{font:11px var(--mono);color:var(--faint);white-space:nowrap}
+.score em{color:var(--peacock);font-style:normal;margin-left:6px}
+.deva{font-family:var(--deva);font-size:21px;line-height:2.05;color:var(--gold);
+  margin:18px 0 0;white-space:pre-line;text-shadow:0 0 34px rgba(233,184,80,.14)}
+.card.muted .deva{font-size:17px;line-height:1.95;color:var(--dim);text-shadow:none}
+.iast{font:12.5px/1.9 var(--mono);color:var(--faint);margin:10px 0 0;white-space:pre-line}
+.rule{height:1px;border:0;margin:20px 0 4px;
+  background:linear-gradient(90deg,transparent,var(--line) 18%,var(--line) 82%,transparent)}
+.rend{margin-top:16px}
+.rend .whom{font:10px var(--mono);color:var(--peacock);text-transform:uppercase;letter-spacing:.16em}
+.rend p{margin:7px 0 0;line-height:1.75;font-family:var(--serif);font-size:15.5px}
+.card.muted .rend p{font-size:14.5px;color:var(--dim)}
+
+.meta{margin-top:26px;font:11px var(--mono);color:var(--faint)}
+footer{margin-top:46px;padding-top:20px;border-top:1px solid var(--line);
+  color:var(--faint);font-size:13px;text-align:center}
+footer a{color:var(--gold)}
+footer p{max-width:64ch;margin:8px auto}
+.shanti{font-family:var(--deva);font-size:15px;color:var(--gold);opacity:.55;letter-spacing:.08em}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<div id="shree" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <div class="banner">
+    <p>
+      <b>Recorded demo.</b> These are real responses from the retrieval pipeline, captured by
+      running each question against all 700 verses and saving the result. This page is a single
+      static file — no backend, no API keys, no network calls. Only public-domain text is shown:
+      the Sanskrit, and Shri Purohit Swami's English translation.
+      <a href="https://github.com/mamta-epili/gita-guidance">Source on GitHub &rarr;</a>
+    </p>
+  </div>
+
+  <section class="invocation">
+    <p class="deva">
+      <span>कृष्णाय वासुदेवाय हरये परमात्मने ।</span>
+      <span>प्रणतक्लेशनाशाय गोविन्दाय नमो नमः ॥</span>
+    </p>
+    <p class="iast">
+      <span>kṛṣṇāya vāsudevāya haraye paramātmane |</span>
+      <span>praṇata-kleśanāśāya govindāya namo namaḥ ||</span>
+    </p>
+  </section>
+
+  <svg class="flute" viewBox="0 0 420 26" width="100%" height="26" fill="none" aria-hidden="true">
+    <path d="M0 13 H128" stroke="#3a2a17"></path>
+    <path d="M292 13 H420" stroke="#3a2a17"></path>
+    <rect x="132" y="9.5" width="156" height="7" rx="3.5" fill="#b8862f"></rect>
+    <circle cx="290" cy="13" r="3.4" fill="none" stroke="#e9b850" stroke-opacity=".6"></circle>
+  </svg>
+
+  <header>
+    <h1><span class="om">ॐ</span>Gita guidance</h1>
+    <p class="tagline">पार्थाय प्रतिबोधिताम् — spoken to Arjuna, for anyone</p>
+    <p class="sub">Describe a situation or a feeling — the shlokas that speak to it, quoted with chapter and verse.</p>
+  </header>
+
+  <div class="panel">
+    <p class="qlabel">Pick a question</p>
+    <div class="qs" id="qs"></div>
+  </div>
+
+  <div id="out"></div>
+
+  <footer>
+    <p>
+      Retrieval only. Every shloka, translation and citation is verbatim from the corpus —
+      nothing on this path writes text, so nothing on it can invent scripture.
+    </p>
+    <p><a href="https://github.com/mamta-epili/gita-guidance">github.com/mamta-epili/gita-guidance</a></p>
+    <p class="shanti">ॐ शान्तिः शान्तिः शान्तिः</p>
+  </footer>
+</div>
+
+<script>
+const DATA = __DEMO_DATA__;
+
+(function shree() {
+  const f = document.createElement("div");
+  f.className = "field";
+  for (let r = 0; r < 16; r++) {
+    const line = document.createElement("div");
+    line.className = "line" + (r % 2 ? " odd" : "");
+    for (let c = 0; c < 14; c++) {
+      const s = document.createElement("span");
+      s.textContent = "श्री";
+      line.appendChild(s);
+    }
+    f.appendChild(line);
+  }
+  document.getElementById("shree").appendChild(f);
+})();
+
+const esc = (s) => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+function card(v, muted) {
+  const en = v.english
+    ? '<div class="rend"><span class="whom">English &middot; ' + esc(v.english.translator) +
+      "</span><p>" + esc(v.english.text) + "</p></div>"
+    : "";
+  return '<article class="card' + (muted ? " muted" : "") + '">' +
+    '<div class="chead"><span class="cite">' + esc(v.citation) +
+      ' <em class="who">' + esc(v.speaker_name) + "</em></span>" +
+      '<span class="score">' + (v.score != null ? v.score.toFixed(3) : "") +
+      (v.matched_lang ? "<em>" + esc(v.matched_lang) + "</em>" : "") + "</span></div>" +
+    (v.sanskrit ? '<p class="deva">' + esc(v.sanskrit) + "</p>" : "") +
+    (v.iast ? '<p class="iast">' + esc(v.iast) + "</p>" : "") +
+    (en ? '<hr class="rule">' + en : "") +
+    "</article>";
+}
+
+let openDialogue = true;
+let current = 0;
+
+function render(i) {
+  current = i;
+  const r = DATA.answers[i];
+  const btns = document.querySelectorAll(".q");
+  for (let k = 0; k < btns.length; k++) btns[k].classList.toggle("on", k === i);
+
+  const teaching = r.teaching.length
+    ? '<section class="teaching"><div class="thead"><div class="titles">' +
+      '<span class="sa">श्रीभगवानुवाच</span>' +
+      '<span class="say">The Blessed Lord said</span></div>' +
+      '<span class="badge">the answer</span></div>' +
+      r.teaching.map(function (v) { return card(v, false); }).join("") +
+      "</section>"
+    : "";
+
+  const dialogue = r.dialogue.length
+    ? '<section class="dialogue"><button class="dhead" id="dtoggle" aria-expanded="' +
+      openDialogue + '"><span class="caret">' + (openDialogue ? "−" : "+") +
+      '</span><span class="sa">अर्जुन उवाच</span><span class="sep">&middot;</span>' +
+      '<span class="say">the same difficulty, as Arjuna put it (' + r.dialogue.length +
+      ")</span></button>" +
+      (openDialogue
+        ? '<p class="note" style="margin:18px 0">These matched the words most closely — ' +
+          "because Arjuna is describing the same trouble. They are the question, not the " +
+          "teaching.</p>" + r.dialogue.map(function (v) { return card(v, true); }).join("")
+        : "") +
+      "</section>"
+    : "";
+
+  document.getElementById("out").innerHTML =
+    '<p class="asked">' + esc(r.question) + "</p>" + teaching + dialogue +
+    '<p class="meta">' + (r.teaching.length + r.dialogue.length) + " of " + r.pool_size +
+    " retrieved &middot; " + esc(DATA.model) + " &middot; recorded " + esc(DATA.generated) +
+    "</p>";
+
+  const t = document.getElementById("dtoggle");
+  if (t) t.addEventListener("click", function () { openDialogue = !openDialogue; render(current); });
+}
+
+(function init() {
+  document.getElementById("qs").innerHTML = DATA.answers.map(function (a, i) {
+    return '<button class="q" data-i="' + i + '">' +
+      (a.chip_sa ? '<span class="sa">' + esc(a.chip_sa) + "</span>" : "") +
+      '<span class="en">' + esc(a.chip_en || a.question) + "</span></button>";
+  }).join("");
+  const btns = document.querySelectorAll(".q");
+  for (let i = 0; i < btns.length; i++) {
+    btns[i].addEventListener("click", function () {
+      render(parseInt(this.getAttribute("data-i"), 10));
+      document.getElementById("out").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+  render(0);
+})();
+</script>
+</body>
+</html>
