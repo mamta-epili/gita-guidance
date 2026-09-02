@@ -110,9 +110,7 @@ make frontend       # terminal 2 → :4200
 
 ---
 
-## Status: working prototype, not yet an MVP
-
-Honest about the gap:
+## Known limits
 
 - **Nothing is out of scope, including things that should be.** Refusing a
   question about despair was a deliberate non-goal — the Gita exists to answer
